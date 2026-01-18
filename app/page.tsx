@@ -12,7 +12,6 @@ const Drawer = lazy(() => import("@/components/Drawer"));
 const Leaderboard = lazy(() => import("@/components/Leaderboard"));
 const Profile = lazy(() => import("@/components/Profile"));
 const MintBadge = lazy(() => import("@/components/MintBadge"));
-const SignIn = lazy(() => import("@/components/SignIn"));
 const MyBalance = lazy(() => import("@/components/MyBalance"));
 const CoursesPage = lazy(() => import("@/features/Courses"));
 
@@ -26,7 +25,6 @@ export default function Home() {
     | "courses"
     | "profile"
     | "leaderboard"
-    | "signin"
     | "balance"
     | "mintbadge"
   >("home");
@@ -41,7 +39,7 @@ export default function Home() {
         // Check if user is first-time visitor
         const userId = context?.user?.fid || "browser_user";
         const storageKey = `synaulearn_welcome_${userId}`;
-        const hasSeenWelcome = localStorage.getItem(storageKey);
+        const hasSeenWelcome = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
 
         if (!hasSeenWelcome) {
           setShowWelcome(true);
@@ -72,7 +70,9 @@ export default function Home() {
     // Save that user has seen the welcome
     const userId = context?.user?.fid || "browser_user";
     const storageKey = `synaulearn_welcome_${userId}`;
-    localStorage.setItem(storageKey, "true");
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, "true");
+    }
 
     setShowWelcome(false);
   };
@@ -80,13 +80,12 @@ export default function Home() {
   const handleNavigate = (view: string) => {
     setCurrentView(
       view as
-        | "home"
-        | "courses"
-        | "profile"
-        | "leaderboard"
-        | "signin"
-        | "balance"
-        | "mintbadge"
+      | "home"
+      | "courses"
+      | "profile"
+      | "leaderboard"
+      | "balance"
+      | "mintbadge"
     );
   };
 
@@ -122,9 +121,6 @@ export default function Home() {
 
       case "mintbadge":
         return <MintBadge onBack={handleBackToHome} />;
-
-      case "signin":
-        return <SignIn onBack={handleBackToHome} />;
 
       case "balance":
         return <MyBalance onBack={handleBackToHome} />;

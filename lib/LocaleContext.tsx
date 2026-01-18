@@ -20,7 +20,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   // Initialize locale from localStorage or browser
   useEffect(() => {
-    const savedLocale = localStorage.getItem('locale') as Locale;
+    const savedLocale = typeof window !== 'undefined' ? localStorage.getItem('locale') as Locale : null;
     if (savedLocale && (savedLocale === 'en' || savedLocale === 'id')) {
       setLocaleState(savedLocale);
     } else {
@@ -46,7 +46,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale);
-    localStorage.setItem('locale', newLocale);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locale', newLocale);
+    }
   };
 
   // Translation function with nested key support

@@ -8,17 +8,47 @@ if (typeof window === 'undefined') {
   }
 }
 
-import { createClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient as createBrowserClient } from './supabase/client';
 
-// Support both browser (NEXT_PUBLIC_*) and Node.js environments
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+// For backward compatibility with existing code
+// Components should gradually migrate to use lib/supabase/client.ts directly
+let supabaseInstance: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase URL and Anon Key are required. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env file');
-}
+// Only create client on the browser side
+const getClientSideSupabase = (): SupabaseClient | null => {
+  if (typeof window === 'undefined') {
+    // Return null on server - caller should handle this
+    return null;
+  }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  if (!supabaseInstance) {
+    supabaseInstance = createBrowserClient();
+  }
+  return supabaseInstance;
+};
+
+// Export for backward compatibility
+// Note: This will be null on server-side, components using this should be client-only
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getClientSideSupabase();
+    if (!client) {
+      // On server, throw a helpful error
+      throw new Error(
+        `Cannot use 'supabase' on the server. Use 'createClient' from 'lib/supabase/server.ts' for server-side operations.`
+      );
+    }
+    const value = client[prop as keyof SupabaseClient];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+});
+
+// Re-export createClient for convenience
+export { createClient as createBrowserClient } from './supabase/client';
 
 // Types
 export type DifficultyLevel = 'Basic' | 'Advanced' | 'Professional';

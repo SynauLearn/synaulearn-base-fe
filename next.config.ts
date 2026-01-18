@@ -15,8 +15,6 @@ const nextConfig: NextConfig = {
     } : false,
   },
 
-  // Production optimizations
-  swcMinify: true,
 
   // Optimize bundle
   modularizeImports: {
@@ -27,6 +25,15 @@ const nextConfig: NextConfig = {
 
   webpack: (config, { isServer }) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
+
+    // Fix WalletConnect localStorage SSR error
+    // @walletconnect/keyvaluestorage accesses localStorage in constructor
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@walletconnect/keyvaluestorage': require.resolve('./lib/mocks/walletconnect-storage.js'),
+      };
+    }
 
     // Optimize bundle size
     if (!isServer) {
@@ -44,6 +51,16 @@ const nextConfig: NextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ['lucide-react', '@coinbase/onchainkit'],
+  },
+
+  // Required for Next.js 16 when webpack config exists
+  // See: https://nextjs.org/docs/app/api-reference/next-config-js/turbopack
+  turbopack: {
+    // Fix WalletConnect localStorage SSR error
+    // @walletconnect/keyvaluestorage accesses localStorage in constructor
+    resolveAlias: {
+      '@walletconnect/keyvaluestorage': './lib/mocks/walletconnect-storage.js',
+    },
   },
 };
 

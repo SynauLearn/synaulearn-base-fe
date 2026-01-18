@@ -3,53 +3,13 @@ import { ReactNode, useState } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { coinbaseWallet, metaMask } from "wagmi/connectors";
-import { base } from "wagmi/chains";
+import { base, baseSepolia } from "wagmi/chains";
 import "@coinbase/onchainkit/styles.css";
-import { defineChain } from "viem";
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "@rainbow-me/rainbowkit/styles.css";
 import { ThemeProvider } from "./theme";
-// import { AuthKitProvider } from '@farcaster/auth-client';
 
-export const baseSepolia = defineChain({
-  id: 84532,
-  name: "Base Sepolia",
-  testnet: true,
-  nativeCurrency: {
-    name: "ETH",
-    symbol: "ETH",
-    decimals: 18,
-  },
-  rpcUrls: {
-    default: {
-      http: ["https://sepolia.base.org"],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "Base Sepolia Explorer",
-      url: "https://base-sepolia.blockscout.com",
-    },
-  },
-  iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=200&v=4",
-});
-
-// export const wagmiConfig = createConfig({
-//   chains: [baseSepolia, base],
-//   connectors: [
-//     coinbaseWallet({
-//       appName: 'SynauLearn',
-//       preference: 'smartWalletOnly',
-//     }),
-//   ],
-//   transports: {
-//     [baseSepolia.id]: http(),
-//   },
-// });
-
-//dari github
+// Single wagmi config - no duplicate RainbowKit config
 export const wagmiConfig = createConfig({
   chains: [baseSepolia, base],
   connectors: [
@@ -59,7 +19,7 @@ export const wagmiConfig = createConfig({
       version: "4",
     }),
     metaMask(),
-    farcasterMiniApp(), // Add additional connectors
+    farcasterMiniApp(), // Auto-connect in mini app context
   ],
   ssr: true,
   transports: {
@@ -67,24 +27,6 @@ export const wagmiConfig = createConfig({
     [baseSepolia.id]: http(),
   },
 });
-
-export const config = getDefaultConfig({
-  appName: "SynauLearn",
-  projectId:
-    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_PROJECT_ID", // Get from https://cloud.walletconnect.com
-  chains: [baseSepolia],
-  ssr: true,
-  transports: {
-    [base.id]: http(),
-    [baseSepolia.id]: http(),
-  },
-});
-
-// const config = {
-//   rpcUrl: 'https://mainnet.optimism.io',
-//   domain:  process.env.DOMAIN || 'localhost:3000',
-//   siweUri: 'https://example.com/login',
-// };
 
 export function RootProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -102,6 +44,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
           chain={baseSepolia}
           config={{
             appearance: {
+              name: "SynauLearn",
               mode: "auto",
               theme: "cyberpunk",
             },
@@ -116,12 +59,12 @@ export function RootProvider({ children }: { children: ReactNode }) {
             notificationProxyUrl: undefined,
           }}
         >
-          {/* <AuthKitProvider config={config}>{children}</AuthKitProvider> */}
-          <WagmiProvider config={config}>
-            <RainbowKitProvider>{children}</RainbowKitProvider>
+          <WagmiProvider config={wagmiConfig}>
+            {children}
           </WagmiProvider>
         </OnchainKitProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
 }
+

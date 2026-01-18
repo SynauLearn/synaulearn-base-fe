@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Menu, Bell, Search } from 'lucide-react';
+import { WalletConnect } from './WalletConnect';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -28,8 +31,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </div>
           </div>
 
-          {/* Right: Actions */}
+          {/* Right: Wallet + Actions */}
           <div className="flex items-center gap-2">
+            {/* Wallet Connect Button */}
+            <WalletConnect className="mr-2" showBalance={false} />
+
             <button className="p-2 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-colors">
               <Search className="w-6 h-6 text-white dark:text-gray-100" />
             </button>
