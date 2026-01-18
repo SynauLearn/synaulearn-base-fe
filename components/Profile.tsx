@@ -5,8 +5,9 @@ import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
 import { BadgeContract } from '@/lib/badgeContract';
 import { getCourseNumber } from '@/lib/courseMapping';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-// import { SignInButton } from '@farcaster/auth-kit';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { WalletConnect } from './WalletConnect';
+import { SignInWithFarcaster, useSIWFProfile } from './SignInWithFarcaster';
 
 interface ProfileProps {
   onBack: () => void;
@@ -24,6 +25,8 @@ interface Badge {
 export default function Profile({ onBack }: ProfileProps) {
   const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
+  const { user: authUser, isAuthenticated, isInMiniApp } = useUnifiedAuth();
+  const siwfProfile = useSIWFProfile();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalXP: 0,
@@ -38,74 +41,65 @@ export default function Profile({ onBack }: ProfileProps) {
     fid: number;
   } | null>(null);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('=== Profile Debug ===');
+    console.log('MiniKit context:', context);
+    console.log('MiniKit context.user:', context?.user);
+    console.log('SIWF Profile:', siwfProfile);
+    console.log('authUser:', authUser);
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('isInMiniApp:', isInMiniApp);
+    console.log('isConnected:', isConnected);
+    console.log('address:', address);
+    console.log('===================');
+  }, [context, siwfProfile, authUser, isAuthenticated, isInMiniApp, isConnected, address]);
+
   const loadProfileData = useCallback(async () => {
     try {
       setLoading(true);
 
-      if (!context?.user?.fid) return;
+      // Try to get FID from multiple sources
+      const fid = context?.user?.fid || siwfProfile.fid;
+      const username = context?.user?.username || siwfProfile.username;
+      const displayName = context?.user?.displayName || siwfProfile.displayName;
 
-      // Get user data
-      const userData = await API.getUserOrCreate(
-        context.user.fid,
-        context.user.username,
-        context.user.displayName
-      );
+      console.log('Loading profile with FID:', fid, 'username:', username);
 
+      if (!fid) {
+        console.log('No FID available, skipping profile load');
+        setLoading(false);
+        return;
+      }
+
+      // Use SIWF profile data directly (no database call for now)
       setUser({
-        username: userData.username || context.user.username || `user${context.user.fid}`,
-        displayName: userData.display_name || context.user.displayName || 'User',
-        fid: context.user.fid,
+        username: username || `user${fid}`,
+        displayName: displayName || 'User',
+        fid: fid,
       });
 
-      // Get user stats
-      const userStats = await API.getUserStats(userData.id);
+      // Placeholder stats until Convex integration
       setStats({
-        totalXP: userStats.totalXP,
-        cardsCompleted: userStats.cardsCompleted,
-        coursesCompleted: userStats.coursesCompleted,
-        streak: 3, // TODO: Calculate real streak
+        totalXP: 0,
+        cardsCompleted: 0,
+        coursesCompleted: 0,
+        streak: 0,
       });
 
-      // Get all courses and badges
-      const courses = await API.getCourses();
-      const badgesList: Badge[] = await Promise.all(
-        courses.map(async (course) => {
-          const progress = await API.getCourseProgressPercentage(userData.id, course.id);
-          const isCompleted = progress === 100;
+      // Empty badges for now
+      setBadges([]);
 
-          // Check if badge is minted on-chain
-          let minted = false;
-          if (isCompleted && isConnected && address) {
-            try {
-              const courseIdNum = getCourseNumber(course.id);
-              if (courseIdNum) {
-                minted = await BadgeContract.hasBadge(address as `0x${string}`, courseIdNum);
-              }
-            } catch (error) {
-              console.error('Error checking on-chain badge for', course.title, error);
-            }
-          }
-
-          return {
-            id: course.id,
-            courseId: course.id,
-            name: course.title,
-            icon: course.emoji,
-            unlocked: isCompleted,
-            minted,
-          };
-        })
-      );
-
-      setBadges(badgesList);
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
       setLoading(false);
     }
-  }, [context, isConnected, address]); // ✅ include only what's used inside
+    // Use primitive values to prevent infinite loop
+  }, [context?.user?.fid, context?.user?.username, context?.user?.displayName,
+  siwfProfile.fid, siwfProfile.username, siwfProfile.displayName]);
 
-  // ✅ Effect depends on the memoized function
+  // Effect depends on the memoized function
   useEffect(() => {
     loadProfileData();
   }, [loadProfileData]);
@@ -121,27 +115,45 @@ export default function Profile({ onBack }: ProfileProps) {
     );
   }
 
-  if (!user) {
+  // Check if user is authenticated (either via Farcaster SIWF, MiniKit context, or wallet)
+  const isUserAuthenticated = user || siwfProfile.isAuthenticated || (isConnected && address);
+
+  if (!isUserAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">Please sign in to view profile</p>
-          {/* <SignInButton
-            onSuccess={({ fid, username }) =>
-              console.log(`Hello, ${username}! Your fid is ${fid}.`)
-            }
-          />
-          <p>or</p> */}
+          <p className="text-gray-400 mb-2">Sign in to view your profile</p>
+          <p className="text-gray-500 text-sm mb-6">Connect with Farcaster to access your learning progress and badges</p>
+
+          {/* Sign In With Farcaster */}
+          <div className="mb-4">
+            <SignInWithFarcaster
+              onSuccess={(fid, username) => {
+                console.log('=== SIWF SUCCESS ===');
+                console.log('FID:', fid);
+                console.log('Username:', username);
+                console.log('==================');
+                // Don't reload - let the component re-render with new SIWF profile data
+              }}
+            />
+          </div>
+
+          <p className="text-gray-500 text-xs mb-4">or</p>
+
+          {/* Wallet Connect as alternative */}
+          <div className="mb-4">
+            <WalletConnect showBalance={false} />
+          </div>
+
           <button
             onClick={onBack}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl"
+            className="text-gray-400 hover:text-white text-sm"
           >
-            Go Back
+            ← Go Back
           </button>
         </div>
       </div>
     );
-
   }
 
   const unlockedBadges = badges.filter(b => b.unlocked);
@@ -170,21 +182,27 @@ export default function Profile({ onBack }: ProfileProps) {
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative mb-4">
             <div className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-              <img
-                src={context?.user?.pfpUrl}
-                alt={context?.user.username || "User Profile Picture"}
-                className="rounded-full object-cover w-40 h-40" // Tailwind classes for styling
-                style={{ objectFit: "cover", width: "160px", height: "160px" }} // Inline styles for fallback
-              />
+              {(context?.user?.pfpUrl || siwfProfile.pfpUrl) ? (
+                <img
+                  src={context?.user?.pfpUrl || siwfProfile.pfpUrl}
+                  alt={user?.username || "User Profile Picture"}
+                  className="rounded-full object-cover w-40 h-40"
+                  style={{ objectFit: "cover", width: "160px", height: "160px" }}
+                />
+              ) : (
+                <span className="text-4xl text-white font-bold">
+                  {user?.displayName?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || '?'}
+                </span>
+              )}
             </div>
             <button className="absolute bottom-0 right-0 w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center transition-colors shadow-lg">
               <Edit className="w-5 h-5 text-white" />
             </button>
           </div>
 
-          <h2 className="text-2xl font-bold mb-1">{user.displayName}</h2>
-          <p className="text-gray-400 mb-2">@{user.username}</p>
-          <p className="text-gray-500 text-sm">FID: {user.fid}</p>
+          <h2 className="text-2xl font-bold mb-1">{user?.displayName || 'User'}</h2>
+          <p className="text-gray-400 mb-2">@{user?.username || 'unknown'}</p>
+          <p className="text-gray-500 text-sm">FID: {user?.fid || 'N/A'}</p>
         </div>
 
         {/* Wallet Connection Status */}
@@ -208,10 +226,7 @@ export default function Profile({ onBack }: ProfileProps) {
                 )}
               </div>
             </div>
-            <ConnectButton
-              chainStatus="icon"
-              showBalance={false}
-            />
+            <WalletConnect showBalance={false} />
           </div>
         </div>
 
@@ -272,11 +287,10 @@ export default function Profile({ onBack }: ProfileProps) {
               <div className="grid grid-cols-3 gap-4">
                 {unlockedBadges.map((badge) => (
                   <div key={badge.id} className="flex flex-col items-center">
-                    <div className={`w-24 h-24 rounded-full ${
-                      badge.minted
-                        ? 'bg-gradient-to-br from-green-400 to-green-600 border-2 border-green-500'
-                        : 'bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-orange-500'
-                    } flex items-center justify-center text-4xl mb-3 relative group cursor-pointer hover:scale-105 transition-transform`}>
+                    <div className={`w-24 h-24 rounded-full ${badge.minted
+                      ? 'bg-gradient-to-br from-green-400 to-green-600 border-2 border-green-500'
+                      : 'bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-orange-500'
+                      } flex items-center justify-center text-4xl mb-3 relative group cursor-pointer hover:scale-105 transition-transform`}>
                       {badge.icon}
                       {badge.minted && (
                         <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-lg">

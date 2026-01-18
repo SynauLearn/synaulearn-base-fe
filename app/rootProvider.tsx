@@ -5,6 +5,8 @@ import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { coinbaseWallet, metaMask } from "wagmi/connectors";
 import { base, baseSepolia } from "wagmi/chains";
 import "@coinbase/onchainkit/styles.css";
+import "@farcaster/auth-kit/styles.css";
+import { AuthKitProvider } from "@farcaster/auth-kit";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./theme";
@@ -28,6 +30,13 @@ export const wagmiConfig = createConfig({
   },
 });
 
+// AuthKit config for Sign In With Farcaster
+const authKitConfig = {
+  rpcUrl: "https://mainnet.optimism.io",
+  domain: process.env.NEXT_PUBLIC_APP_DOMAIN || "localhost:3000",
+  siweUri: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+};
+
 export function RootProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -39,32 +48,33 @@ export function RootProvider({ children }: { children: ReactNode }) {
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <OnchainKitProvider
-          apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-          chain={baseSepolia}
-          config={{
-            appearance: {
-              name: "SynauLearn",
-              mode: "auto",
-              theme: "cyberpunk",
-            },
-            wallet: {
-              display: "modal",
-              preference: "all",
-            },
-          }}
-          miniKit={{
-            enabled: true,
-            autoConnect: true,
-            notificationProxyUrl: undefined,
-          }}
-        >
-          <WagmiProvider config={wagmiConfig}>
-            {children}
-          </WagmiProvider>
-        </OnchainKitProvider>
+        <AuthKitProvider config={authKitConfig}>
+          <OnchainKitProvider
+            apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+            chain={baseSepolia}
+            config={{
+              appearance: {
+                name: "SynauLearn",
+                mode: "auto",
+                theme: "cyberpunk",
+              },
+              wallet: {
+                display: "modal",
+                preference: "all",
+              },
+            }}
+            miniKit={{
+              enabled: true,
+              autoConnect: true,
+              notificationProxyUrl: undefined,
+            }}
+          >
+            <WagmiProvider config={wagmiConfig}>
+              {children}
+            </WagmiProvider>
+          </OnchainKitProvider>
+        </AuthKitProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
 }
-

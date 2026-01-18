@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "NODE_OPTIONS='--no-warnings' next dev --turbopack",
+    "build": "NODE_OPTIONS='--no-warnings' next build",
+    "start": "NODE_OPTIONS='--no-warnings' next start",
     "lint": "next lint",
     "setup-ipfs": "npx tsx scripts/setupIPFS.ts",
     "set-baseuri": "npx tsx scripts/setBaseURI.ts",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
+    "@farcaster/auth-kit": "^0.8.1",
     "@farcaster/miniapp-core": "^0.3.8",
     "@farcaster/miniapp-node": "^0.1.8",
     "@farcaster/miniapp-sdk": "^0.2.1",
