@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { DifficultyLevel } from "@/lib/supabase";
+
+// Local type definition (moved from supabase)
+type DifficultyLevel = 'Basic' | 'Intermediate' | 'Advanced' | 'Professional';
 import Categories from "./components/Categories";
 import CourseCard from "./components/CourseCard";
 import LessonPage from "./components/LessonPage";

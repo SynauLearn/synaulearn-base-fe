@@ -1,4 +1,9 @@
-import { Course } from "./supabase";
+// Local Course interface (previously from supabase)
+export interface Course {
+  title: string;
+  total_lessons: number;
+  emoji: string;
+}
 
 export interface BadgeMetadata {
   name: string;
