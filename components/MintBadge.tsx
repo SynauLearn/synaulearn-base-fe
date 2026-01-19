@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Lock, Check, ExternalLink } from 'lucide-react';
 import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectButton } from './WalletConnect';
 import { BadgeContract } from '@/lib/badgeContract';
 import { getCourseNumber } from '@/lib/courseMapping';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
@@ -271,10 +271,7 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
                                     : 'Connect to mint badges as NFTs on Base Sepolia'}
                             </p>
                         </div>
-                        <ConnectButton
-                            chainStatus="icon"
-                            showBalance={false}
-                        />
+                        <ConnectButton />
                     </div>
                 </div>
 
