@@ -1,18 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { API, Course, Category } from "@/lib/api";
 import { DifficultyLevel } from "@/lib/supabase";
 import Categories from "./components/Categories";
 import CourseCard from "./components/CourseCard";
 import LessonPage from "./components/LessonPage";
+import LessonList from "./components/LessonList";
 import LanguageFilter from "./components/LanguageFilter";
 import CategoryAccordion from "./components/CategoryAccordion";
 import { useLocale } from '@/lib/LocaleContext';
 import { List, Grid3x3, Search, X } from 'lucide-react';
-
-interface CourseWithProgress extends Course {
-  progress: number;
-}
+import { useSIWFProfile } from "@/components/SignInWithFarcaster";
+import {
+  useCourses,
+  useCategories,
+  useUserByFid,
+  useGetOrCreateUser,
+  useAllCoursesProgress,
+  CourseId,
+  UserId
+} from "@/lib/convexApi";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface CoursesPageProps {
   setIsLessonStart: React.Dispatch<React.SetStateAction<boolean>>;
@@ -21,13 +28,33 @@ interface CoursesPageProps {
 const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
   const { t } = useLocale();
   const { context } = useMiniKit();
-  const [courses, setCourses] = useState<CourseWithProgress[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<{
-    courseId: string;
-    lessonId: string;
+  const siwfProfile = useSIWFProfile();
+
+  // Get FID from MiniKit or SIWF
+  const fid = context?.user?.fid || siwfProfile.fid;
+  const username = context?.user?.username || siwfProfile.username;
+  const displayName = context?.user?.displayName || siwfProfile.displayName;
+
+  // Convex hooks
+  const getOrCreateUser = useGetOrCreateUser();
+  const convexUser = useUserByFid(fid);
+  const courses = useCourses();
+  const categories = useCategories();
+
+  const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
+  const coursesProgress = useAllCoursesProgress(convexUserId ?? undefined);
+
+  // State for showing lesson list (intermediate step)
+  const [selectedCourseForLessons, setSelectedCourseForLessons] = useState<{
+    courseId: Id<"courses">;
+    courseTitle: string;
+    courseEmoji: string;
+  } | null>(null);
+
+  // State for active lesson (cards view)
+  const [selectedLesson, setSelectedLesson] = useState<{
+    courseId: Id<"courses">;
+    lessonId: Id<"lessons">;
     courseTitle: string;
   } | null>(null);
 
@@ -49,128 +76,113 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
   // Search query
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Load courses and progress from Supabase
+  // Create or get user in Convex when FID is available
   useEffect(() => {
-    async function loadCoursesWithProgress() {
+    async function ensureUser() {
+      if (!fid) return;
+
       try {
-        setLoading(true);
-
-        // Get or create user
-        let currentUserId = null;
-        if (context?.user?.fid) {
-          const user = await API.getUserOrCreate(
-            context.user.fid,
-            context.user.username,
-            context.user.displayName
-          );
-          currentUserId = user.id;
-          setUserId(user.id);
-        }
-
-        // Fetch categories
-        const fetchedCategories = await API.getCategories();
-        setCategories(fetchedCategories);
-
-        // Fetch courses with category data
-        const fetchedCourses = await API.getCoursesWithCategories();
-
-        // Get progress for each course
-        const coursesWithProgress = await Promise.all(
-          fetchedCourses.map(async (course) => {
-            let progress = 0;
-
-            if (currentUserId) {
-              progress = await API.getCourseProgressPercentage(
-                currentUserId,
-                course.id
-              );
-            }
-
-            return {
-              ...course,
-              progress,
-            };
-          })
-        );
-
-        setCourses(coursesWithProgress);
-      } catch (error) {
-        console.error("Error loading courses:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadCoursesWithProgress();
-  }, [context]);
-
-  const handleCourseClick = async (courseId: string) => {
-    try {
-      // Get first lesson for this course
-      const lessons = await API.getLessonsForCourse(courseId);
-
-      if (lessons.length > 0) {
-        const course = courses.find((c) => c.id === courseId);
-        setSelectedCourse({
-          courseId,
-          lessonId: lessons[0].id,
-          courseTitle: course?.title || "Course",
+        const user = await getOrCreateUser({
+          fid,
+          username: username || undefined,
+          display_name: displayName || undefined,
         });
-        setIsLessonStart(true);
-      } else {
-        alert(t('courses.noLessonsAvailable'));
-      }
-    } catch (error) {
-      console.error("Error loading lessons:", error);
-      alert(t('courses.failedToLoad'));
-    }
-  };
-
-  const handleBack = async () => {
-    setSelectedCourse(null);
-    setIsLessonStart(false);
-
-    // Reload courses to update progress
-    if (userId) {
-      try {
-        const fetchedCourses = await API.getCoursesWithCategories();
-
-        const coursesWithProgress = await Promise.all(
-          fetchedCourses.map(async (course) => {
-            const progress = await API.getCourseProgressPercentage(
-              userId,
-              course.id
-            );
-            return {
-              ...course,
-              progress,
-            };
-          })
-        );
-
-        setCourses(coursesWithProgress);
+        if (user) {
+          setConvexUserId(user._id);
+        }
       } catch (error) {
-        console.error("Error reloading courses:", error);
+        console.error('Error creating user:', error);
       }
+    }
+
+    ensureUser();
+  }, [fid, username, displayName, getOrCreateUser]);
+
+  // Build courses with progress from database
+  const coursesWithProgress = useMemo(() => {
+    if (!courses) return [];
+
+    // Create a map of course progress for easy lookup
+    const progressMap: Record<string, number> = {};
+    if (coursesProgress) {
+      for (const cp of coursesProgress) {
+        progressMap[cp.courseId] = cp.progress;
+      }
+    }
+
+    return courses.map(course => ({
+      ...course,
+      id: course._id,
+      progress: progressMap[course._id] ?? 0,
+    }));
+  }, [courses, coursesProgress]);
+
+  // Loading state
+  const loading = courses === undefined;
+
+  // Handle course click - show lesson list
+  const handleCourseClick = (courseId: string) => {
+    const course = coursesWithProgress.find((c) => c.id === courseId);
+    if (course) {
+      setSelectedCourseForLessons({
+        courseId: courseId as Id<"courses">,
+        courseTitle: course.title,
+        courseEmoji: course.emoji || '📚',
+      });
+      setIsLessonStart(true);
     }
   };
 
-  const handleLessonComplete = async () => {
-    alert("Lesson completed! +100 XP total");
-    setIsLessonStart(false);
-
-    // Reload courses to update progress
-    await handleBack();
+  // Handle lesson selection from LessonList
+  const handleLessonSelect = (lessonId: Id<"lessons">, lessonTitle: string) => {
+    if (selectedCourseForLessons) {
+      setSelectedLesson({
+        courseId: selectedCourseForLessons.courseId,
+        lessonId: lessonId,
+        courseTitle: selectedCourseForLessons.courseTitle,
+      });
+    }
   };
 
-  // Show CardView when course is selected
-  if (selectedCourse) {
+  // Handle back from lesson cards to lesson list
+  const handleBackToLessons = () => {
+    setSelectedLesson(null);
+  };
+
+  // Handle back from lesson list to courses
+  const handleBackToCourses = () => {
+    setSelectedCourseForLessons(null);
+    setSelectedLesson(null);
+    setIsLessonStart(false);
+  };
+
+  const handleLessonComplete = () => {
+    alert("Lesson completed!");
+    setSelectedLesson(null); // Go back to lesson list after completing
+  };
+
+  // Show LessonPage (cards) when a specific lesson is selected
+  if (selectedLesson) {
     return (
       <LessonPage
-        lessonId={selectedCourse.lessonId}
-        courseTitle={selectedCourse.courseTitle}
-        onBack={handleBack}
+        lessonId={selectedLesson.lessonId as string}
+        courseTitle={selectedLesson.courseTitle}
+        onBack={handleBackToLessons}
         onComplete={handleLessonComplete}
+      />
+    );
+  }
+
+  // Show LessonList when a course is selected
+  if (selectedCourseForLessons) {
+    return (
+      <LessonList
+        courseId={selectedCourseForLessons.courseId}
+        courseTitle={selectedCourseForLessons.courseTitle}
+        courseEmoji={selectedCourseForLessons.courseEmoji}
+        userId={convexUserId}
+        onBack={handleBackToCourses}
+        onLessonSelect={handleLessonSelect}
       />
     );
   }
@@ -186,7 +198,7 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
   }
 
   // Filter courses based on selected language, difficulty, and search query
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = coursesWithProgress.filter(course => {
     // Filter by language
     const matchesLanguage = languageFilter === 'all' || course.language === languageFilter;
 
@@ -196,7 +208,7 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
     // Filter by search query (searches in title and description)
     const matchesSearch = searchQuery.trim() === '' ||
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (course.description || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesLanguage && matchesDifficulty && matchesSearch;
   });
@@ -245,22 +257,20 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
       <div className="flex justify-center gap-2">
         <button
           onClick={() => setViewMode('category')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-            viewMode === 'category'
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${viewMode === 'category'
+            ? 'bg-blue-600 text-white'
+            : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
+            }`}
         >
           <Grid3x3 className="w-4 h-4" />
           {t('courses.viewByCategory')}
         </button>
         <button
           onClick={() => setViewMode('list')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-            viewMode === 'list'
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${viewMode === 'list'
+            ? 'bg-blue-600 text-white'
+            : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
+            }`}
         >
           <List className="w-4 h-4" />
           {t('courses.viewAsList')}
@@ -278,9 +288,25 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
           </div>
         ) : viewMode === 'category' ? (
           <CategoryAccordion
-            categories={categories}
+            categories={(categories || []).map(c => ({
+              id: c._id as string,
+              name: c.name,
+              name_id: c.name_id,
+              emoji: c.emoji || '',
+              slug: c.slug,
+              order_index: c.order_index,
+              description: c.description || '',
+              description_id: c.description_id || '',
+            }))}
             courses={filteredCourses.map(c => ({
-              ...c,
+              id: c._id as string,
+              title: c.title,
+              description: c.description || '',
+              emoji: c.emoji || '',
+              language: c.language,
+              difficulty: c.difficulty,
+              category_id: c.category_id as string | null | undefined,
+              total_lessons: c.total_lessons,
               progressPercentage: c.progress
             }))}
             onCourseClick={handleCourseClick}
@@ -289,13 +315,13 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
           filteredCourses.map((course, index) => {
             return (
               <CourseCard
-                key={course.id}
+                key={course._id}
                 id={index + 1}
                 title={course.title}
-                description={course.description}
+                description={course.description || ''}
                 progress={course.progress}
-                image={course.emoji}
-                onClick={() => handleCourseClick(course.id)}
+                image={course.emoji || '📚'}
+                onClick={() => handleCourseClick(course._id)}
               />
             );
           })

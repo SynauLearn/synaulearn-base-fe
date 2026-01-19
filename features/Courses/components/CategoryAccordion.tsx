@@ -2,20 +2,30 @@
 
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Category } from '@/lib/api';
 import { useLocale } from '@/lib/LocaleContext';
 import CourseCard from './CourseCard';
+
+// Define types inline to avoid dependency on lib/api
+export interface Category {
+  id: string;
+  name: string;
+  name_id: string;
+  emoji: string;
+  slug: string;
+  order_index: number;
+  description?: string;
+  description_id?: string;
+}
 
 export interface CourseWithProgress {
   id: string;
   title: string;
   description: string;
   emoji: string;
-  language: 'en' | 'id';
-  difficulty: 'Basic' | 'Advanced' | 'Professional';
-  category_id: string | null;
+  language: string;
+  difficulty: string;
+  category_id?: string | null;
   total_lessons: number;
-  created_at: string;
   progressPercentage?: number;
 }
 
@@ -68,9 +78,8 @@ const CategoryAccordion: React.FC<CategoryAccordionProps> = ({
                 </div>
               </div>
               <ChevronDown
-                className={`w-5 h-5 transition-transform ${
-                  isExpanded ? 'rotate-180' : ''
-                }`}
+                className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''
+                  }`}
               />
             </button>
 

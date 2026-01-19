@@ -10,6 +10,7 @@ import { AuthKitProvider } from "@farcaster/auth-kit";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./theme";
+import { ConvexClientProvider } from "./ConvexClientProvider";
 
 // Single wagmi config - no duplicate RainbowKit config
 export const wagmiConfig = createConfig({
@@ -47,34 +48,36 @@ export function RootProvider({ children }: { children: ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <QueryClientProvider client={queryClient}>
-        <AuthKitProvider config={authKitConfig}>
-          <OnchainKitProvider
-            apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-            chain={baseSepolia}
-            config={{
-              appearance: {
-                name: "SynauLearn",
-                mode: "auto",
-                theme: "cyberpunk",
-              },
-              wallet: {
-                display: "modal",
-                preference: "all",
-              },
-            }}
-            miniKit={{
-              enabled: true,
-              autoConnect: true,
-              notificationProxyUrl: undefined,
-            }}
-          >
-            <WagmiProvider config={wagmiConfig}>
-              {children}
-            </WagmiProvider>
-          </OnchainKitProvider>
-        </AuthKitProvider>
-      </QueryClientProvider>
+      <ConvexClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthKitProvider config={authKitConfig}>
+            <OnchainKitProvider
+              apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+              chain={baseSepolia}
+              config={{
+                appearance: {
+                  name: "SynauLearn",
+                  mode: "auto",
+                  theme: "cyberpunk",
+                },
+                wallet: {
+                  display: "modal",
+                  preference: "all",
+                },
+              }}
+              miniKit={{
+                enabled: true,
+                autoConnect: true,
+                notificationProxyUrl: undefined,
+              }}
+            >
+              <WagmiProvider config={wagmiConfig}>
+                {children}
+              </WagmiProvider>
+            </OnchainKitProvider>
+          </AuthKitProvider>
+        </QueryClientProvider>
+      </ConvexClientProvider>
     </ThemeProvider>
   );
 }

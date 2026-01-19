@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Home, GraduationCap, User, BarChart3, Award, Moon, Sun, Settings, HelpCircle, X } from 'lucide-react';
-import { API } from '@/lib/api';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useLocale } from '@/lib/LocaleContext';
 import { useTheme } from 'next-themes';
+import { useSIWFProfile } from './SignInWithFarcaster';
+import { useUserByFid, useUserStats } from '@/lib/convexApi';
 
 interface DrawerProps {
   isOpen: boolean;
@@ -16,40 +17,26 @@ interface DrawerProps {
 export default function Drawer({ isOpen, onClose, currentView, onNavigate, onMintBadgeClick }: DrawerProps) {
   const { t, locale, setLocale } = useLocale();
   const { context } = useMiniKit();
+  const siwfProfile = useSIWFProfile();
   const { theme, setTheme } = useTheme();
-  const [userStats, setUserStats] = useState({
-    displayName: 'User',
-    username: 'user',
-    totalXP: 0,
-    badgeCount: 0,
-  });
 
-  useEffect(() => {
-    async function loadUserData() {
-      if (context?.user?.fid && isOpen) {
-        try {
-          const user = await API.getUserOrCreate(
-            context.user.fid,
-            context.user.username,
-            context.user.displayName
-          );
+  // Get FID from MiniKit context or SIWF session
+  const fid = context?.user?.fid || siwfProfile.fid;
+  const username = context?.user?.username || siwfProfile.username;
+  const displayName = context?.user?.displayName || siwfProfile.displayName;
+  const pfpUrl = context?.user?.pfpUrl || siwfProfile.pfpUrl;
 
-          const stats = await API.getUserStats(user.id);
+  // Use Convex hooks for data
+  const convexUser = useUserByFid(fid);
+  const userStats = useUserStats(convexUser?._id);
 
-          setUserStats({
-            displayName: user.display_name || context.user.displayName || 'User',
-            username: user.username || context.user.username || `user${context.user.fid}`,
-            totalXP: stats.totalXP,
-            badgeCount: stats.coursesCompleted,
-          });
-        } catch (error) {
-          console.error('Error loading user data:', error);
-        }
-      }
-    }
-
-    loadUserData();
-  }, [context, isOpen]);
+  // Build user stats from Convex
+  const stats = {
+    displayName: displayName || convexUser?.display_name || 'User',
+    username: username || convexUser?.username || `user${fid || ''}`,
+    totalXP: userStats?.totalXP ?? 0,
+    badgeCount: userStats?.coursesCompleted ?? 0,
+  };
 
   const menuItems = [
     { id: 'home', icon: Home, label: t('drawer.home') },
@@ -88,17 +75,21 @@ export default function Drawer({ isOpen, onClose, currentView, onNavigate, onMin
           <div className="p-6 border-b border-slate-800 dark:border-slate-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                  <img
-                    src={context?.user?.pfpUrl}
-                    alt="Profile"
-                    width={64}
-                    height={64}
-                    style={{ borderRadius: '50%' }}
-                  />
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+                  {pfpUrl ? (
+                    <img
+                      src={pfpUrl}
+                      alt="Profile"
+                      width={64}
+                      height={64}
+                      style={{ borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <span>{stats.displayName.charAt(0).toUpperCase()}</span>
+                  )}
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-lg">{userStats.displayName}</h3>
+                  <h3 className="text-white font-semibold text-lg">{stats.displayName}</h3>
                   <button
                     onClick={() => {
                       onNavigate('profile');
@@ -121,11 +112,11 @@ export default function Drawer({ isOpen, onClose, currentView, onNavigate, onMin
             {/* User Stats */}
             <div className="flex gap-3">
               <div className="flex-1 bg-slate-800/50 dark:bg-slate-800/70 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-blue-400 dark:text-blue-400">{userStats.totalXP}</div>
+                <div className="text-lg font-bold text-blue-400 dark:text-blue-400">{stats.totalXP}</div>
                 <div className="text-xs text-gray-400 dark:text-gray-400">{t('drawer.totalXP')}</div>
               </div>
               <div className="flex-1 bg-slate-800/50 dark:bg-slate-800/70 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-purple-400 dark:text-purple-400">{userStats.badgeCount}</div>
+                <div className="text-lg font-bold text-purple-400 dark:text-purple-400">{stats.badgeCount}</div>
                 <div className="text-xs text-gray-400 dark:text-gray-400">{t('drawer.badges')}</div>
               </div>
             </div>
@@ -193,8 +184,8 @@ export default function Drawer({ isOpen, onClose, currentView, onNavigate, onMin
                 <button
                   onClick={() => setLocale('en')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm transition-all ${locale === 'en'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-800 dark:bg-slate-800 text-gray-300 dark:text-gray-200 hover:bg-slate-700 dark:hover:bg-slate-600'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 dark:bg-slate-800 text-gray-300 dark:text-gray-200 hover:bg-slate-700 dark:hover:bg-slate-600'
                     }`}
                 >
                   🇺🇸 English
@@ -202,8 +193,8 @@ export default function Drawer({ isOpen, onClose, currentView, onNavigate, onMin
                 <button
                   onClick={() => setLocale('id')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm transition-all ${locale === 'id'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-800 dark:bg-slate-800 text-gray-300 dark:text-gray-200 hover:bg-slate-700 dark:hover:bg-slate-600'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 dark:bg-slate-800 text-gray-300 dark:text-gray-200 hover:bg-slate-700 dark:hover:bg-slate-600'
                     }`}
                 >
                   🇮🇩 Bahasa

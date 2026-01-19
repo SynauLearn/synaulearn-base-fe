@@ -2,6 +2,7 @@
 
 import { SignInButton, useProfile, StatusAPIResponse, AuthClientError } from '@farcaster/auth-kit';
 import { useCallback } from 'react';
+import { usePersistentSIWFProfile, clearSIWFSession } from '@/hooks/usePersistentSIWFSession';
 
 interface SignInWithFarcasterProps {
     onSuccess?: (fid: number, username?: string) => void;
@@ -14,7 +15,7 @@ export function SignInWithFarcaster({
     onError,
     className
 }: SignInWithFarcasterProps) {
-    const { isAuthenticated, profile } = useProfile();
+    const { isAuthenticated, fid, displayName, username, pfpUrl } = usePersistentSIWFProfile();
 
     const handleSuccess = useCallback((res: StatusAPIResponse) => {
         console.log('SIWF Success:', res);
@@ -28,18 +29,18 @@ export function SignInWithFarcaster({
         onError?.(error);
     }, [onError]);
 
-    if (isAuthenticated && profile?.fid) {
+    if (isAuthenticated && fid) {
         return (
             <div className={`flex items-center gap-2 ${className || ''}`}>
-                {profile.pfpUrl && (
+                {pfpUrl && (
                     <img
-                        src={profile.pfpUrl}
-                        alt={profile.username || 'User'}
+                        src={pfpUrl}
+                        alt={username || 'User'}
                         className="w-8 h-8 rounded-full"
                     />
                 )}
                 <span className="text-sm font-medium text-white">
-                    {profile.displayName || profile.username || `FID: ${profile.fid}`}
+                    {displayName || username || `FID: ${fid}`}
                 </span>
             </div>
         );
@@ -55,17 +56,5 @@ export function SignInWithFarcaster({
     );
 }
 
-// Hook to get SIWF profile data
-export function useSIWFProfile() {
-    const { isAuthenticated, profile } = useProfile();
-
-    return {
-        isAuthenticated,
-        fid: profile?.fid,
-        username: profile?.username,
-        displayName: profile?.displayName,
-        pfpUrl: profile?.pfpUrl,
-        bio: profile?.bio,
-        custody: profile?.custody,
-    };
-}
+// Re-export the persistent hook for use elsewhere
+export { usePersistentSIWFProfile as useSIWFProfile, clearSIWFSession };

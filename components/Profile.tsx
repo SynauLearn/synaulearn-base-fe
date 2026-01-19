@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Edit, Lock, Trophy, Wallet } from 'lucide-react';
-import { API } from '@/lib/api';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
 import { BadgeContract } from '@/lib/badgeContract';
@@ -8,6 +7,8 @@ import { getCourseNumber } from '@/lib/courseMapping';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { WalletConnect } from './WalletConnect';
 import { SignInWithFarcaster, useSIWFProfile } from './SignInWithFarcaster';
+import { useUserByFid, useUserStats, useCourses, useGetOrCreateUser, UserId, CourseId } from '@/lib/convexApi';
+import { useMutation } from 'convex/react';
 
 interface ProfileProps {
   onBack: () => void;
@@ -27,82 +28,75 @@ export default function Profile({ onBack }: ProfileProps) {
   const { address, isConnected } = useAccount();
   const { user: authUser, isAuthenticated, isInMiniApp } = useUnifiedAuth();
   const siwfProfile = useSIWFProfile();
+
+  // Get FID from available sources
+  const fid = context?.user?.fid || siwfProfile.fid;
+  const username = context?.user?.username || siwfProfile.username;
+  const displayName = context?.user?.displayName || siwfProfile.displayName;
+  const pfpUrl = context?.user?.pfpUrl || siwfProfile.pfpUrl;
+
+  // Convex hooks
+  const getOrCreateUser = useGetOrCreateUser();
+  const convexUser = useUserByFid(fid);
+  const userStats = useUserStats(convexUser?._id);
+  const courses = useCourses();
+
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalXP: 0,
-    cardsCompleted: 0,
-    coursesCompleted: 0,
-    streak: 3,
-  });
+  const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
-  const [user, setUser] = useState<{
-    username: string;
-    displayName: string;
-    fid: number;
-  } | null>(null);
 
-  // Debug logging
+  // Create or get user in Convex when FID is available
   useEffect(() => {
-    console.log('=== Profile Debug ===');
-    console.log('MiniKit context:', context);
-    console.log('MiniKit context.user:', context?.user);
-    console.log('SIWF Profile:', siwfProfile);
-    console.log('authUser:', authUser);
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('isInMiniApp:', isInMiniApp);
-    console.log('isConnected:', isConnected);
-    console.log('address:', address);
-    console.log('===================');
-  }, [context, siwfProfile, authUser, isAuthenticated, isInMiniApp, isConnected, address]);
-
-  const loadProfileData = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      // Try to get FID from multiple sources
-      const fid = context?.user?.fid || siwfProfile.fid;
-      const username = context?.user?.username || siwfProfile.username;
-      const displayName = context?.user?.displayName || siwfProfile.displayName;
-
-      console.log('Loading profile with FID:', fid, 'username:', username);
-
+    async function ensureUser() {
       if (!fid) {
-        console.log('No FID available, skipping profile load');
         setLoading(false);
         return;
       }
 
-      // Use SIWF profile data directly (no database call for now)
-      setUser({
-        username: username || `user${fid}`,
-        displayName: displayName || 'User',
-        fid: fid,
-      });
-
-      // Placeholder stats until Convex integration
-      setStats({
-        totalXP: 0,
-        cardsCompleted: 0,
-        coursesCompleted: 0,
-        streak: 0,
-      });
-
-      // Empty badges for now
-      setBadges([]);
-
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoading(false);
+      try {
+        const user = await getOrCreateUser({
+          fid,
+          username: username || undefined,
+          display_name: displayName || undefined,
+        });
+        if (user) {
+          setConvexUserId(user._id);
+        }
+      } catch (error) {
+        console.error('Error creating user:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-    // Use primitive values to prevent infinite loop
-  }, [context?.user?.fid, context?.user?.username, context?.user?.displayName,
-  siwfProfile.fid, siwfProfile.username, siwfProfile.displayName]);
 
-  // Effect depends on the memoized function
+    ensureUser();
+  }, [fid, username, displayName, getOrCreateUser]);
+
+  // Build stats from Convex data
+  const stats = {
+    totalXP: userStats?.totalXP ?? 0,
+    cardsCompleted: userStats?.cardsCompleted ?? 0,
+    coursesCompleted: userStats?.coursesCompleted ?? 0,
+    streak: 0, // TODO: implement streak
+  };
+
+  // Build user object
+  const user = fid ? {
+    username: username || `user${fid}`,
+    displayName: displayName || 'User',
+    fid,
+  } : null;
+
+  // Debug logging
   useEffect(() => {
-    loadProfileData();
-  }, [loadProfileData]);
+    console.log('=== Profile Debug ===');
+    console.log('FID:', fid, 'username:', username);
+    console.log('Convex user:', convexUser);
+    console.log('User stats:', userStats);
+    console.log('Courses:', courses);
+    console.log('===================');
+  }, [fid, username, convexUser, userStats, courses]);
+
 
   if (loading) {
     return (
@@ -182,9 +176,9 @@ export default function Profile({ onBack }: ProfileProps) {
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative mb-4">
             <div className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-              {(context?.user?.pfpUrl || siwfProfile.pfpUrl) ? (
+              {pfpUrl ? (
                 <img
-                  src={context?.user?.pfpUrl || siwfProfile.pfpUrl}
+                  src={pfpUrl}
                   alt={user?.username || "User Profile Picture"}
                   className="rounded-full object-cover w-40 h-40"
                   style={{ objectFit: "cover", width: "160px", height: "160px" }}

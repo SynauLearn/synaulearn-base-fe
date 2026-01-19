@@ -1,11 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Lock, Check, ExternalLink } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { API } from '@/lib/api';
 import { BadgeContract } from '@/lib/badgeContract';
 import { getCourseNumber } from '@/lib/courseMapping';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useSIWFProfile } from './SignInWithFarcaster';
+import {
+    useUserByFid,
+    useCourses,
+    useAllCoursesProgress,
+    useUserBadges,
+    useGetOrCreateUser,
+    useSaveMintedBadge,
+    UserId
+} from '@/lib/convexApi';
 
 interface MintBadgeProps {
     onBack: () => void;
@@ -23,88 +32,81 @@ interface Course {
 
 export default function MintBadge({ onBack }: MintBadgeProps) {
     const { address, isConnected } = useAccount();
-    const [courses, setCourses] = useState<Course[]>([]);
     const [mintingCourseId, setMintingCourseId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintingStatus, setMintingStatus] = useState<string>('');
     const { context } = useMiniKit();
+    const siwfProfile = useSIWFProfile();
 
-    const loadCourses = useCallback(async () => {
-        try {
-            setLoading(true);
+    // Get FID from MiniKit or SIWF
+    const fid = context?.user?.fid || siwfProfile.fid;
+    const fidUsername = context?.user?.username || siwfProfile.username;
+    const fidDisplayName = context?.user?.displayName || siwfProfile.displayName;
 
-            // For demo, create mock user. In production, get from your auth
-            const mockFid = 12345;
-            const user = await API.getUserOrCreate(
-                context?.user?.fid || mockFid,                // unique user ID
-                context?.user?.username || address,
-                context?.user?.displayName || 'Wallet User'
-            );
+    // Convex hooks
+    const getOrCreateUser = useGetOrCreateUser();
+    const saveMintedBadge = useSaveMintedBadge();
+    const convexUser = useUserByFid(fid);
+    const allCourses = useCourses();
 
-            const allCourses = await API.getCourses();
+    const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
+    const coursesProgress = useAllCoursesProgress(convexUserId ?? undefined);
+    const userBadges = useUserBadges(convexUserId ?? undefined);
 
-            const coursesWithStatus = await Promise.all(
-                allCourses.map(async (course) => {
-                    const progress = await API.getCourseProgressPercentage(user.id, course.id);
-                    const completed = progress === 100;
-
-                    let minted = false;
-                    let tokenId: string | undefined;
-
-                    if (address && completed) {
-                        try {
-                            // Get numeric course ID from mapping
-                            const courseIdNum = getCourseNumber(course.id);
-
-                            if (courseIdNum) {
-                                minted = await BadgeContract.hasBadge(address as `0x${string}`, courseIdNum);
-                                if (minted) {
-                                    const tokenIdBigInt = await BadgeContract.getUserBadgeForCourse(
-                                        address as `0x${string}`,
-                                        courseIdNum
-                                    );
-                                    tokenId = tokenIdBigInt.toString();
-                                }
-                            } else {
-                                console.warn('Course not mapped:', course.id);
-                            }
-                        } catch (error) {
-                            console.error('Error checking minted status:', error);
-                        }
-                    }
-
-                    if (!minted && completed) {
-                        const dbBadge = await API.getMintedBadge(user.id, course.id);
-                        if (dbBadge) {
-                            minted = true;
-                            tokenId = dbBadge.token_id;
-                        }
-                    }
-
-                    return {
-                        id: course.id,
-                        title: course.title,
-                        description: course.description,
-                        emoji: course.emoji,
-                        completed,
-                        minted,
-                        tokenId,
-                    };
-                })
-            );
-
-            setCourses(coursesWithStatus);
-        } catch (error) {
-            console.error('Error loading courses:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [address, context?.user?.fid, context?.user?.username, context?.user?.displayName]);
-
+    // Create or get user when FID/address is available
     useEffect(() => {
-        loadCourses();
-    }, [loadCourses]);
+        async function ensureUser() {
+            if (!fid && !address) return;
+
+            try {
+                const user = await getOrCreateUser({
+                    fid: fid || 0,
+                    username: fidUsername || address || undefined,
+                    display_name: fidDisplayName || 'Wallet User',
+                });
+                if (user) {
+                    setConvexUserId(user._id);
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+            }
+        }
+
+        ensureUser();
+    }, [fid, address, fidUsername, fidDisplayName, getOrCreateUser]);
+
+    // Build courses list with completion and minted status
+    const courses = useMemo<Course[]>(() => {
+        if (!allCourses) return [];
+
+        // Create progress map
+        const progressMap: Record<string, number> = {};
+        if (coursesProgress) {
+            for (const cp of coursesProgress) {
+                progressMap[cp.courseId] = cp.progress;
+            }
+        }
+
+        // Create minted badges map
+        const mintedMap: Record<string, { tokenId?: string }> = {};
+        if (userBadges) {
+            for (const badge of userBadges) {
+                mintedMap[badge.course_id] = { tokenId: badge.token_id };
+            }
+        }
+
+        return allCourses.map(course => ({
+            id: course._id,
+            title: course.title,
+            description: course.description || '',
+            emoji: course.emoji || '📚',
+            completed: (progressMap[course._id] ?? 0) === 100,
+            minted: !!mintedMap[course._id],
+            tokenId: mintedMap[course._id]?.tokenId,
+        }));
+    }, [allCourses, coursesProgress, userBadges]);
+
+    const loading = allCourses === undefined;
 
     const handleMintBadge = async (course: Course) => {
         if (!course.completed || course.minted || mintingCourseId) return;
@@ -170,39 +172,30 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
                     courseIdNum
                 );
 
-                // Save to database
+                // Save to database using Convex
                 try {
                     setMintingStatus('Saving to database...');
-                    const user = await API.getUserOrCreate(
-                        context?.user?.fid || 12345,
-                        context?.user?.username,
-                        context?.user?.displayName);
 
-                    await API.saveMintedBadge(
-                        user.id,
-                        course.id,
-                        address,
-                        tokenId.toString(),
-                        result.txHash
-                    );
-
-                    console.log('✅ Badge saved to database');
+                    if (convexUserId) {
+                        await saveMintedBadge({
+                            userId: convexUserId,
+                            courseId: course.id as any, // Convex Id type
+                            walletAddress: address,
+                            tokenId: tokenId.toString(),
+                            txHash: result.txHash,
+                        });
+                        console.log('✅ Badge saved to database');
+                    }
                 } catch (dbError) {
                     console.error('❌ Database error:', dbError);
                     // Continue even if database save fails
                 }
 
-                // Update UI
-                setCourses(prevCourses =>
-                    prevCourses.map(c =>
-                        c.id === course.id ? { ...c, minted: true, tokenId: tokenId.toString() } : c
-                    )
-                );
-
+                // UI will auto-update from Convex hook
                 setMintingStatus('Badge minted successfully!');
                 alert(`✅ Badge minted!\n\nTx: ${result.txHash.slice(0, 10)}...${result.txHash.slice(-8)}\nToken #${tokenId.toString()}`);
 
-                await loadCourses();
+                // Convex hooks will auto-update the UI
             } else {
                 // Handle failure cases
                 const errorMsg = result.error || 'Unknown error';
@@ -265,140 +258,140 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
 
             {/* Content */}
             <div className="px-6 py-6">
-                    {/* RainbowKit Connect Button */}
-                    <div className="mb-6 p-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-white font-semibold mb-1">
-                                    {isConnected ? '✅ Wallet Connected' : '🔗 Connect Your Wallet'}
-                                </p>
-                                <p className="text-gray-300 text-sm">
-                                    {isConnected
-                                        ? 'Ready to mint your badges'
-                                        : 'Connect to mint badges as NFTs on Base Sepolia'}
-                                </p>
-                            </div>
-                            <ConnectButton
-                                chainStatus="icon"
-                                showBalance={false}
-                            />
-                        </div>
-                    </div>
-
-                    {txHash && (
-                        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                            <p className="text-green-400 text-sm mb-2">
-                                ✅ Transaction successful!
+                {/* RainbowKit Connect Button */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-white font-semibold mb-1">
+                                {isConnected ? '✅ Wallet Connected' : '🔗 Connect Your Wallet'}
                             </p>
-                            <a
-                                href={`https://sepolia.basescan.org/tx/${txHash}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-400 text-xs flex items-center gap-1 hover:underline"
-                            >
-                                View on BaseScan <ExternalLink className="w-3 h-3" />
-                            </a>
+                            <p className="text-gray-300 text-sm">
+                                {isConnected
+                                    ? 'Ready to mint your badges'
+                                    : 'Connect to mint badges as NFTs on Base Sepolia'}
+                            </p>
                         </div>
-                    )}
-
-                    <h3 className="text-lg font-semibold text-white mb-4">
-                        Select a completed course to mint
-                    </h3>
-
-                    <div className="space-y-4">
-                        {courses.map((course) => {
-                            const isMinting = mintingCourseId === course.id;
-
-                            return (
-                                <div
-                                    key={course.id}
-                                    className={`rounded-2xl border-2 p-5 transition-all ${!course.completed
-                                        ? 'border-slate-800 bg-slate-900/30 opacity-60'
-                                        : course.minted
-                                            ? 'border-green-500/50 bg-green-500/10'
-                                            : isMinting
-                                                ? 'border-blue-500 bg-slate-800/70'
-                                                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                                        }`}
-                                >
-                                    <div className="flex gap-4">
-                                        <div
-                                            className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 ${course.minted
-                                                ? 'bg-gradient-to-br from-green-400 to-green-600'
-                                                : course.completed
-                                                    ? 'bg-gradient-to-br from-orange-400 to-orange-600'
-                                                    : 'bg-slate-800 border-2 border-slate-700'
-                                                }`}
-                                        >
-                                            {isMinting ? (
-                                                <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                                            ) : course.minted ? (
-                                                <Check className="w-10 h-10 text-white" />
-                                            ) : course.completed ? (
-                                                course.emoji
-                                            ) : (
-                                                <Lock className="w-8 h-8 text-gray-600" />
-                                            )}
-                                        </div>
-
-                                        <div className="flex-1">
-                                            {course.completed && !course.minted && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded-md mb-2">
-                                                    <Check className="w-3 h-3" />
-                                                    Ready to Mint
-                                                </span>
-                                            )}
-                                            {course.minted && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-md mb-2">
-                                                    <Check className="w-3 h-3" />
-                                                    Minted #{course.tokenId}
-                                                </span>
-                                            )}
-                                            {!course.completed && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-800 text-gray-500 text-xs font-medium rounded-md mb-2">
-                                                    <Lock className="w-3 h-3" />
-                                                    Complete Course First
-                                                </span>
-                                            )}
-                                            <h4 className="text-lg font-semibold text-white mb-2">
-                                                {course.title}
-                                            </h4>
-                                            <p className="text-sm text-gray-400">
-                                                {course.description}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {course.completed && !course.minted && !isMinting && (
-                                        <button
-                                            onClick={() => handleMintBadge(course)}
-                                            disabled={!isConnected}
-                                            className={`mt-4 w-full py-3 px-4 font-semibold rounded-lg transition-colors ${isConnected
-                                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            {isConnected ? 'Mint Badge (Free)' : '🔒 Connect Wallet First'}
-                                        </button>
-                                    )}
-
-                                    {isMinting && (
-                                        <div className="mt-4 w-full py-3 px-4 bg-blue-500/20 text-blue-400 font-semibold rounded-lg flex items-center justify-center gap-2">
-                                            <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                                            {mintingStatus || 'Minting on Base Sepolia...'}
-                                        </div>
-                                    )}
-
-                                    {course.minted && (
-                                        <div className="mt-4 w-full py-3 px-4 bg-green-500/10 border border-green-500/30 text-green-400 font-semibold rounded-lg text-center">
-                                            ✅ Badge Minted Successfully
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                        <ConnectButton
+                            chainStatus="icon"
+                            showBalance={false}
+                        />
                     </div>
                 </div>
+
+                {txHash && (
+                    <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
+                        <p className="text-green-400 text-sm mb-2">
+                            ✅ Transaction successful!
+                        </p>
+                        <a
+                            href={`https://sepolia.basescan.org/tx/${txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 text-xs flex items-center gap-1 hover:underline"
+                        >
+                            View on BaseScan <ExternalLink className="w-3 h-3" />
+                        </a>
+                    </div>
+                )}
+
+                <h3 className="text-lg font-semibold text-white mb-4">
+                    Select a completed course to mint
+                </h3>
+
+                <div className="space-y-4">
+                    {courses.map((course) => {
+                        const isMinting = mintingCourseId === course.id;
+
+                        return (
+                            <div
+                                key={course.id}
+                                className={`rounded-2xl border-2 p-5 transition-all ${!course.completed
+                                    ? 'border-slate-800 bg-slate-900/30 opacity-60'
+                                    : course.minted
+                                        ? 'border-green-500/50 bg-green-500/10'
+                                        : isMinting
+                                            ? 'border-blue-500 bg-slate-800/70'
+                                            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                                    }`}
+                            >
+                                <div className="flex gap-4">
+                                    <div
+                                        className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 ${course.minted
+                                            ? 'bg-gradient-to-br from-green-400 to-green-600'
+                                            : course.completed
+                                                ? 'bg-gradient-to-br from-orange-400 to-orange-600'
+                                                : 'bg-slate-800 border-2 border-slate-700'
+                                            }`}
+                                    >
+                                        {isMinting ? (
+                                            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : course.minted ? (
+                                            <Check className="w-10 h-10 text-white" />
+                                        ) : course.completed ? (
+                                            course.emoji
+                                        ) : (
+                                            <Lock className="w-8 h-8 text-gray-600" />
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1">
+                                        {course.completed && !course.minted && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded-md mb-2">
+                                                <Check className="w-3 h-3" />
+                                                Ready to Mint
+                                            </span>
+                                        )}
+                                        {course.minted && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-md mb-2">
+                                                <Check className="w-3 h-3" />
+                                                Minted #{course.tokenId}
+                                            </span>
+                                        )}
+                                        {!course.completed && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-800 text-gray-500 text-xs font-medium rounded-md mb-2">
+                                                <Lock className="w-3 h-3" />
+                                                Complete Course First
+                                            </span>
+                                        )}
+                                        <h4 className="text-lg font-semibold text-white mb-2">
+                                            {course.title}
+                                        </h4>
+                                        <p className="text-sm text-gray-400">
+                                            {course.description}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {course.completed && !course.minted && !isMinting && (
+                                    <button
+                                        onClick={() => handleMintBadge(course)}
+                                        disabled={!isConnected}
+                                        className={`mt-4 w-full py-3 px-4 font-semibold rounded-lg transition-colors ${isConnected
+                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        {isConnected ? 'Mint Badge (Free)' : '🔒 Connect Wallet First'}
+                                    </button>
+                                )}
+
+                                {isMinting && (
+                                    <div className="mt-4 w-full py-3 px-4 bg-blue-500/20 text-blue-400 font-semibold rounded-lg flex items-center justify-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                        {mintingStatus || 'Minting on Base Sepolia...'}
+                                    </div>
+                                )}
+
+                                {course.minted && (
+                                    <div className="mt-4 w-full py-3 px-4 bg-green-500/10 border border-green-500/30 text-green-400 font-semibold rounded-lg text-center">
+                                        ✅ Badge Minted Successfully
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
     );
 }
