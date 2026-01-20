@@ -102,10 +102,13 @@ export async function generateMetadata(): Promise<Metadata> {
         version: miniapp.version,
         imageUrl: miniapp.heroImageUrl,
         button: {
-          title: `${miniapp.name}`,
+          title: miniapp.tagline || miniapp.name,
           action: {
-            name: `${miniapp.name}`,
+            name: miniapp.name,
             type: "launch_miniapp",
+            url: ROOT_URL,
+            splashImageUrl: miniapp.splashImageUrl,
+            splashBackgroundColor: miniapp.splashBackgroundColor,
           },
         },
       }),
