@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+// Bundle analyzer for debugging bundle size
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig: NextConfig = {
   // Optimize images
   images: {
@@ -50,7 +55,7 @@ const nextConfig: NextConfig = {
 
   // Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@coinbase/onchainkit'],
+    optimizePackageImports: ['lucide-react', '@coinbase/onchainkit', 'wagmi', 'viem'],
   },
 
   // Required for Next.js 16 when webpack config exists
@@ -64,4 +69,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
+

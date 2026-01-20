@@ -7,11 +7,8 @@
     "build": "NODE_OPTIONS='--no-warnings' next build",
     "start": "NODE_OPTIONS='--no-warnings' next start",
     "lint": "next lint",
-    "setup-ipfs": "npx tsx scripts/setupIPFS.ts",
-    "set-baseuri": "npx tsx scripts/setBaseURI.ts",
-    "cleanup-badges": "npx tsx scripts/cleanupBadges.ts",
-    "insert-indonesian-course": "npx tsx scripts/insert-indonesian-course.ts",
-    "insert-all-indonesian-courses": "npx tsx scripts/insert-all-indonesian-courses.ts"
+    "analyze": "ANALYZE=true bun run build",
+    "set-baseuri": "npx tsx scripts/setBaseURI.ts"
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
@@ -22,8 +19,6 @@
     "@farcaster/quick-auth": "^0.0.7",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-progress": "^1.1.7",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.75.0",
     "@tailwindcss/postcss": "^4.1.14",
     "@tanstack/react-query": "^5.90.5",
     "class-variance-authority": "^0.7.1",
@@ -48,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^16.1.4",
     "@next/eslint-plugin-next": "^16.1.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -55,5 +51,8 @@
     "eslint": "^9",
     "eslint-config-next": "^16.1.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "viem": "^2.38.3"
   }
 }
