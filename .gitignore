@@ -75,3 +75,5 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+sql_dump/
