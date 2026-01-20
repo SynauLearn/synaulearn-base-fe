@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, lazy, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { Preloaded, usePreloadedQuery } from "convex/react";
 import { LocaleProvider } from "@/lib/LocaleContext";
@@ -12,10 +13,34 @@ import { api } from "@/convex/_generated/api";
 const WelcomeModal = lazy(() => import("@/components/WelcomeModal"));
 const Drawer = lazy(() => import("@/components/Drawer"));
 const Leaderboard = lazy(() => import("@/components/Leaderboard"));
-const Profile = lazy(() => import("@/components/Profile"));
-const MintBadge = lazy(() => import("@/components/MintBadge"));
-const MyBalance = lazy(() => import("@/components/MyBalance"));
 const CoursesPage = lazy(() => import("@/features/Courses"));
+
+// Dynamic import with SSR disabled for wallet-heavy components
+// This prevents wallet code from being included in initial SSR bundle
+const Profile = dynamic(() => import("@/components/Profile"), {
+    ssr: false,
+    loading: () => (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    ),
+});
+const MintBadge = dynamic(() => import("@/components/MintBadge"), {
+    ssr: false,
+    loading: () => (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    ),
+});
+const MyBalance = dynamic(() => import("@/components/MyBalance"), {
+    ssr: false,
+    loading: () => (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    ),
+});
 
 interface ClientAppProps {
     preloadedCourses: Preloaded<typeof api.courses.list>;
