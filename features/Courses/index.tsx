@@ -22,12 +22,47 @@ import {
   UserId
 } from "@/lib/convexApi";
 import { Id } from "@/convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+
+// Type for course from Convex (matches schema.ts)
+type ConvexCourse = {
+  _id: Id<"courses">;
+  _creationTime: number;
+  title: string;
+  description?: string;
+  emoji?: string;
+  language: string;
+  difficulty: string;
+  category_id?: Id<"categories">;
+  total_lessons: number;
+  created_at: number;
+};
+
+// Type for category from Convex (matches schema.ts)
+type ConvexCategory = {
+  _id: Id<"categories">;
+  _creationTime: number;
+  name: string;
+  name_id: string;
+  description?: string;
+  description_id?: string;
+  emoji?: string;
+  slug: string;
+  order_index: number;
+};
 
 interface CoursesPageProps {
   setIsLessonStart: React.Dispatch<React.SetStateAction<boolean>>;
+  // Optional: preloaded data from SSR
+  preloadedCourses?: ConvexCourse[];
+  preloadedCategories?: ConvexCategory[];
 }
 
-const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
+const CoursesPage: React.FC<CoursesPageProps> = ({
+  setIsLessonStart,
+  preloadedCourses,
+  preloadedCategories
+}) => {
   const { t } = useLocale();
   const { context } = useMiniKit();
   const siwfProfile = useSIWFProfile();
@@ -37,11 +72,15 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setIsLessonStart }) => {
   const username = context?.user?.username || siwfProfile.username;
   const displayName = context?.user?.displayName || siwfProfile.displayName;
 
-  // Convex hooks
+  // Convex hooks - will be skipped if preloaded data provided
   const getOrCreateUser = useGetOrCreateUser();
   const convexUser = useUserByFid(fid);
-  const courses = useCourses();
-  const categories = useCategories();
+  const hookCourses = useCourses();
+  const hookCategories = useCategories();
+
+  // Use preloaded data if available, otherwise use hooks
+  const courses = preloadedCourses ?? hookCourses;
+  const categories = preloadedCategories ?? hookCategories;
 
   const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
   const coursesProgress = useAllCoursesProgress(convexUserId ?? undefined);
