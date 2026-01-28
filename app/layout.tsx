@@ -37,6 +37,16 @@ export async function generateMetadata(): Promise<Metadata> {
     creator: "SynauLearn",
     publisher: "SynauLearn",
 
+    // PWA & Apple
+    appleWebApp: {
+      capable: true,
+      title: miniapp.name,
+      statusBarStyle: "default",
+      startupImage: [
+        "/icon.png",
+      ],
+    },
+
     // Favicon & Icons
     icons: {
       icon: "/favicon.ico",

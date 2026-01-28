@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS='--no-warnings' next dev --turbopack",
-    "build": "NODE_OPTIONS='--no-warnings' next build",
+    "build": "NODE_OPTIONS='--no-warnings' next build --webpack",
     "start": "NODE_OPTIONS='--no-warnings' next start",
     "lint": "next lint",
     "analyze": "ANALYZE=true bun run build",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@farcaster/auth-kit": "^0.8.1",
     "@farcaster/miniapp-core": "^0.3.8",
     "@farcaster/miniapp-node": "^0.1.8",

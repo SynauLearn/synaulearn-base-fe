@@ -60,6 +60,8 @@ const nextConfig: NextConfig = {
 
   // Required for Next.js 16 when webpack config exists
   // See: https://nextjs.org/docs/app/api-reference/next-config-js/turbopack
+  // Required for Next.js 16 when webpack config exists
+  // See: https://nextjs.org/docs/app/api-reference/next-config-js/turbopack
   turbopack: {
     // Fix WalletConnect localStorage SSR error
     // @walletconnect/keyvaluestorage accesses localStorage in constructor
@@ -69,5 +71,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+// Configure PWA
+// Configure PWA
+const withPWA = require("@ducanh2912/next-pwa").default({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+});
+
+export default withBundleAnalyzer(withPWA(nextConfig));
 

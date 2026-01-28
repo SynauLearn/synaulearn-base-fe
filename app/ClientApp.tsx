@@ -172,14 +172,11 @@ export default function ClientApp({
             case "home":
             default:
                 return (
-                    <>
-                        <Header onMenuClick={() => setIsDrawerOpen(true)} />
-                        <HomeView
-                            userName={
-                                context?.user?.displayName || context?.user?.username || "User"
-                            }
-                        />
-                    </>
+                    <HomeView
+                        userName={
+                            context?.user?.displayName || context?.user?.username || "User"
+                        }
+                    />
                 );
         }
     };
@@ -209,6 +206,9 @@ export default function ClientApp({
 
             {/* Main App */}
             <main className="min-h-screen pb-24 bg-slate-950 dark:bg-slate-950">
+                {/* Global Header - shown on all tabs */}
+                <Header onMenuClick={() => setIsDrawerOpen(true)} />
+
                 <Suspense fallback={
                     <div className="min-h-screen flex items-center justify-center">
                         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
