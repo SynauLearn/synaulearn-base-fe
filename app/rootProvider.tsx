@@ -3,13 +3,14 @@ import { ReactNode, useState } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { coinbaseWallet, metaMask } from "wagmi/connectors";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { base, baseSepolia } from "wagmi/chains";
 import "@coinbase/onchainkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./theme";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 
-// Simplified wagmi config - OnchainKit handles farcasterMiniApp connector internally
+// Wagmi config with farcasterMiniApp connector for Base App/Warpcast frame support
 export const wagmiConfig = createConfig({
   chains: [baseSepolia, base],
   connectors: [
@@ -19,7 +20,7 @@ export const wagmiConfig = createConfig({
       version: "4",
     }),
     metaMask(),
-    // farcasterMiniApp() - Removed: OnchainKit handles this internally when miniKit.enabled = true
+    farcasterMiniApp(), // Required for Base App frame integration
   ],
   ssr: true,
   transports: {

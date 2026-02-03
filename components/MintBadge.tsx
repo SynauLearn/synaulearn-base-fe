@@ -109,26 +109,9 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
     const loading = allCourses === undefined;
 
     const handleMintBadge = async (course: Course) => {
-        console.log('🔴 handleMintBadge CALLED', { course: course.title, courseId: course.id });
-        console.log('🔴 State check:', {
-            completed: course.completed,
-            minted: course.minted,
-            mintingCourseId,
-            isConnected,
-            address
-        });
-
-        if (!course.completed || course.minted || mintingCourseId) {
-            console.log('🔴 EARLY RETURN: course not ready', {
-                completed: course.completed,
-                minted: course.minted,
-                mintingCourseId
-            });
-            return;
-        }
+        if (!course.completed || course.minted || mintingCourseId) return;
 
         if (!isConnected || !address) {
-            console.log('🔴 WALLET NOT CONNECTED');
             alert('⚠️ Please connect your wallet first');
             return;
         }
@@ -312,18 +295,6 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
                     Select a completed course to mint
                 </h3>
 
-                {/* DEBUG: Test button to verify clicks work */}
-                <button
-                    onClick={() => {
-                        console.log('🔵 TEST BUTTON CLICKED');
-                        alert('Test button works!');
-                    }}
-                    className="mb-4 w-full py-3 px-4 bg-red-600 text-white font-bold rounded-lg"
-                    style={{ touchAction: 'manipulation' }}
-                >
-                    🧪 DEBUG: Test Click (Tap Me!)
-                </button>
-
                 <div className="space-y-4">
                     {courses.map((course) => {
                         const isMinting = mintingCourseId === course.id;
@@ -390,35 +361,10 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
 
                                 {course.completed && !course.minted && !isMinting && (
                                     <button
-                                        onPointerDown={(e) => {
-                                            // PointerDown fires immediately and works in Base App webview
-                                            console.log('� BUTTON onPointerDown', { courseId: course.id, pointerType: e.pointerType });
-                                        }}
-                                        onPointerUp={(e) => {
-                                            // Use pointerUp instead of click for Base App compatibility
-                                            console.log('🟣 BUTTON onPointerUp - executing action', { courseId: course.id });
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            handleMintBadge(course);
-                                        }}
-                                        onClick={(e) => {
-                                            // Fallback for desktop browsers
-                                            console.log('� BUTTON onClick triggered', { courseId: course.id });
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            // Only trigger if not already triggered by pointerUp
-                                            if (e.detail === 0) return; // synthetic event
-                                            handleMintBadge(course);
-                                        }}
+                                        onClick={() => handleMintBadge(course)}
                                         disabled={!isConnected}
-                                        style={{
-                                            touchAction: 'manipulation',
-                                            WebkitTapHighlightColor: 'transparent',
-                                            WebkitUserSelect: 'none',
-                                            userSelect: 'none',
-                                        }}
-                                        className={`mt-4 w-full py-4 px-4 font-semibold rounded-lg transition-colors relative z-50 ${isConnected
-                                            ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
+                                        className={`mt-4 w-full py-3 px-4 font-semibold rounded-lg transition-colors ${isConnected
+                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                             : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                                             }`}
                                     >
