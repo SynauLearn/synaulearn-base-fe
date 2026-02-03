@@ -312,6 +312,18 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
                     Select a completed course to mint
                 </h3>
 
+                {/* DEBUG: Test button to verify clicks work */}
+                <button
+                    onClick={() => {
+                        console.log('🔵 TEST BUTTON CLICKED');
+                        alert('Test button works!');
+                    }}
+                    className="mb-4 w-full py-3 px-4 bg-red-600 text-white font-bold rounded-lg"
+                    style={{ touchAction: 'manipulation' }}
+                >
+                    🧪 DEBUG: Test Click (Tap Me!)
+                </button>
+
                 <div className="space-y-4">
                     {courses.map((course) => {
                         const isMinting = mintingCourseId === course.id;
