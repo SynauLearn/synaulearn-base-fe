@@ -109,9 +109,26 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
     const loading = allCourses === undefined;
 
     const handleMintBadge = async (course: Course) => {
-        if (!course.completed || course.minted || mintingCourseId) return;
+        console.log('🔴 handleMintBadge CALLED', { course: course.title, courseId: course.id });
+        console.log('🔴 State check:', {
+            completed: course.completed,
+            minted: course.minted,
+            mintingCourseId,
+            isConnected,
+            address
+        });
+
+        if (!course.completed || course.minted || mintingCourseId) {
+            console.log('🔴 EARLY RETURN: course not ready', {
+                completed: course.completed,
+                minted: course.minted,
+                mintingCourseId
+            });
+            return;
+        }
 
         if (!isConnected || !address) {
+            console.log('🔴 WALLET NOT CONNECTED');
             alert('⚠️ Please connect your wallet first');
             return;
         }
@@ -361,10 +378,22 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
 
                                 {course.completed && !course.minted && !isMinting && (
                                     <button
-                                        onClick={() => handleMintBadge(course)}
+                                        onClick={(e) => {
+                                            console.log('🟢 BUTTON onClick triggered', { courseId: course.id });
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleMintBadge(course);
+                                        }}
+                                        onTouchStart={(e) => {
+                                            console.log('🟡 BUTTON onTouchStart', { courseId: course.id });
+                                        }}
+                                        onTouchEnd={(e) => {
+                                            console.log('🟡 BUTTON onTouchEnd', { courseId: course.id });
+                                        }}
                                         disabled={!isConnected}
-                                        className={`mt-4 w-full py-3 px-4 font-semibold rounded-lg transition-colors ${isConnected
-                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                                        className={`mt-4 w-full py-3 px-4 font-semibold rounded-lg transition-colors relative z-50 ${isConnected
+                                            ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white'
                                             : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                                             }`}
                                     >
