@@ -1,6 +1,6 @@
 import { createPublicClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
-import { writeContract, switchChain } from '@wagmi/core';
+import { writeContract, switchChain } from 'wagmi/actions';
 import type { Config } from 'wagmi';
 
 // Conditional import: use Node.js config in scripts, browser config in app
@@ -572,9 +572,9 @@ export const BadgeContract = {
 
         // Handle specific error cases
         if (errorMessage.includes('User rejected') ||
-            errorMessage.includes('User denied') ||
-            errorMessage.includes('rejected') ||
-            errorMessage.includes('denied transaction')) {
+          errorMessage.includes('User denied') ||
+          errorMessage.includes('rejected') ||
+          errorMessage.includes('denied transaction')) {
           errorMessage = 'Transaction rejected. Please approve in your wallet.';
         } else if (errorMessage.includes('insufficient funds')) {
           errorMessage = 'Insufficient funds. Get Base Sepolia ETH from faucet.';

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import AppleMascot from "@/assets/mascot/apple-mascot.svg";
 import WormMascot from "@/assets/mascot/worm-mascot.svg";
 import Image from "next/image";
