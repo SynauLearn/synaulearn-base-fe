@@ -5,14 +5,11 @@ import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { coinbaseWallet, metaMask } from "wagmi/connectors";
 import { base, baseSepolia } from "wagmi/chains";
 import "@coinbase/onchainkit/styles.css";
-import "@farcaster/auth-kit/styles.css";
-import { AuthKitProvider } from "@farcaster/auth-kit";
-import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./theme";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 
-// Single wagmi config - no duplicate RainbowKit config
+// Simplified wagmi config - OnchainKit handles farcasterMiniApp connector internally
 export const wagmiConfig = createConfig({
   chains: [baseSepolia, base],
   connectors: [
@@ -22,7 +19,7 @@ export const wagmiConfig = createConfig({
       version: "4",
     }),
     metaMask(),
-    farcasterMiniApp(), // Auto-connect in mini app context
+    // farcasterMiniApp() - Removed: OnchainKit handles this internally when miniKit.enabled = true
   ],
   ssr: true,
   transports: {
@@ -30,13 +27,6 @@ export const wagmiConfig = createConfig({
     [baseSepolia.id]: http(),
   },
 });
-
-// AuthKit config for Sign In With Farcaster
-const authKitConfig = {
-  rpcUrl: "https://mainnet.optimism.io",
-  domain: process.env.NEXT_PUBLIC_APP_DOMAIN || "localhost:3000",
-  siweUri: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-};
 
 export function RootProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -50,9 +40,11 @@ export function RootProvider({ children }: { children: ReactNode }) {
     >
       <ConvexClientProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthKitProvider config={authKitConfig}>
+          {/* Fixed: WagmiProvider now wraps OnchainKitProvider */}
+          <WagmiProvider config={wagmiConfig}>
             <OnchainKitProvider
               apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+              projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
               chain={baseSepolia}
               config={{
                 appearance: {
@@ -71,11 +63,9 @@ export function RootProvider({ children }: { children: ReactNode }) {
                 notificationProxyUrl: undefined,
               }}
             >
-              <WagmiProvider config={wagmiConfig}>
-                {children}
-              </WagmiProvider>
+              {children}
             </OnchainKitProvider>
-          </AuthKitProvider>
+          </WagmiProvider>
         </QueryClientProvider>
       </ConvexClientProvider>
     </ThemeProvider>

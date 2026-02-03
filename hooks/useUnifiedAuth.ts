@@ -1,6 +1,12 @@
+'use client';
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
+
+// Base App clientFid for platform detection
+const BASE_APP_CLIENT_FID = 309857;
+const WARPCAST_CLIENT_FID = 9152;
 
 interface UnifiedUser {
     fid?: number;
@@ -16,6 +22,9 @@ interface UseUnifiedAuthReturn {
     isLoading: boolean;
     isAuthenticated: boolean;
     isInMiniApp: boolean;
+    isBaseApp: boolean;
+    isWarpcast: boolean;
+    isBrowser: boolean;
     error: string | null;
     signIn: () => Promise<void>;
     signOut: () => void;
@@ -28,15 +37,18 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     const [error, setError] = useState<string | null>(null);
     const initRef = useRef(false);
 
-    // OnchainKit MiniKit context
+    // OnchainKit MiniKit context - provides user info in mini app
     const { context, setFrameReady, isFrameReady } = useMiniKit();
 
     // Wagmi hooks for wallet connection
     const { address, isConnected } = useAccount();
     const { disconnect } = useDisconnect();
 
-    // Check if running in mini app context
+    // Platform detection
     const isInMiniApp = Boolean(context?.client?.added || context?.user?.fid);
+    const isBaseApp = context?.client?.clientFid === BASE_APP_CLIENT_FID;
+    const isWarpcast = context?.client?.clientFid === WARPCAST_CLIENT_FID;
+    const isBrowser = !context;
 
     // Initialize auth on mount
     useEffect(() => {
@@ -49,8 +61,16 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
 
             try {
                 if (isInMiniApp && context?.user?.fid) {
-                    // Mini App context - use Quick Auth
-                    await authenticateWithQuickAuth();
+                    // Mini App context - use context data directly
+                    // Wallet is auto-connected by OnchainKit's miniKit.autoConnect
+                    setUser({
+                        fid: context.user.fid,
+                        username: context.user.username,
+                        displayName: context.user.displayName,
+                        pfpUrl: context.user.pfpUrl,
+                        walletAddress: address,
+                        authMethod: 'quick-auth',
+                    });
                 } else if (isConnected && address) {
                     // Browser with connected wallet
                     setUser({
@@ -81,7 +101,13 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
     useEffect(() => {
         if (!initRef.current) return;
 
-        if (isConnected && address && !isInMiniApp) {
+        if (isInMiniApp && context?.user?.fid) {
+            // Update wallet address in mini app context
+            setUser(prev => prev ? {
+                ...prev,
+                walletAddress: address,
+            } : null);
+        } else if (isConnected && address && !isInMiniApp) {
             setUser({
                 walletAddress: address,
                 authMethod: 'wallet',
@@ -89,77 +115,32 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
         } else if (!isConnected && !isInMiniApp && user?.authMethod === 'wallet') {
             setUser(null);
         }
-    }, [isConnected, address, isInMiniApp, user?.authMethod]);
-
-    const authenticateWithQuickAuth = useCallback(async () => {
-        try {
-            // Dynamic import to prevent SSR issues
-            const { sdk } = await import('@farcaster/miniapp-sdk');
-
-            // Get Quick Auth token
-            const { token } = await sdk.quickAuth.getToken();
-
-            // Verify token with backend
-            const response = await sdk.quickAuth.fetch('/api/auth/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                const userData = await response.json();
-                setUser({
-                    fid: userData.fid,
-                    username: userData.username,
-                    displayName: userData.displayName,
-                    pfpUrl: userData.pfpUrl,
-                    walletAddress: userData.walletAddress,
-                    authMethod: 'quick-auth',
-                });
-                setError(null);
-            } else {
-                // Fallback to context data if backend verification fails
-                if (context?.user) {
-                    setUser({
-                        fid: context.user.fid,
-                        username: context.user.username,
-                        displayName: context.user.displayName,
-                        pfpUrl: context.user.pfpUrl,
-                        authMethod: 'quick-auth',
-                    });
-                }
-            }
-        } catch (err) {
-            console.error('Quick Auth error:', err);
-            // Fallback to context data
-            if (context?.user) {
-                setUser({
-                    fid: context.user.fid,
-                    username: context.user.username,
-                    displayName: context.user.displayName,
-                    pfpUrl: context.user.pfpUrl,
-                    authMethod: 'quick-auth',
-                });
-            }
-        }
-    }, [context]);
+    }, [isConnected, address, isInMiniApp, context, user?.authMethod]);
 
     const signIn = useCallback(async () => {
         setIsLoading(true);
         setError(null);
 
         try {
-            if (isInMiniApp) {
-                await authenticateWithQuickAuth();
+            if (isInMiniApp && context?.user) {
+                // In mini app context, use the context data
+                setUser({
+                    fid: context.user.fid,
+                    username: context.user.username,
+                    displayName: context.user.displayName,
+                    pfpUrl: context.user.pfpUrl,
+                    walletAddress: address,
+                    authMethod: 'quick-auth',
+                });
             }
-            // For browser wallet, connection is handled by OnchainKit <ConnectWallet>
-            // The useEffect will catch the wallet connection
+            // For browser wallet connection, let OnchainKit's ConnectWallet handle it
+            // The useEffect will catch the wallet connection change
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Sign in failed');
         } finally {
             setIsLoading(false);
         }
-    }, [isInMiniApp, authenticateWithQuickAuth]);
+    }, [isInMiniApp, context, address]);
 
     const signOut = useCallback(() => {
         setUser(null);
@@ -183,21 +164,31 @@ export function useUnifiedAuth(): UseUnifiedAuthReturn {
         setIsLoading(true);
 
         try {
-            if (isInMiniApp) {
-                await authenticateWithQuickAuth();
+            if (isInMiniApp && context?.user) {
+                setUser({
+                    fid: context.user.fid,
+                    username: context.user.username,
+                    displayName: context.user.displayName,
+                    pfpUrl: context.user.pfpUrl,
+                    walletAddress: address,
+                    authMethod: 'quick-auth',
+                });
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Refetch failed');
         } finally {
             setIsLoading(false);
         }
-    }, [isInMiniApp, authenticateWithQuickAuth]);
+    }, [isInMiniApp, context, address]);
 
     return {
         user,
         isLoading,
         isAuthenticated: Boolean(user),
         isInMiniApp,
+        isBaseApp,
+        isWarpcast,
+        isBrowser,
         error,
         signIn,
         signOut,
