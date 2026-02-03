@@ -169,6 +169,101 @@ The Web3 education gap is real. Millions are curious about blockchain, DeFi, and
 
 ### For Developers
 
+#### Architecture Diagram
+```mermaid
+graph TD
+    %% Styling
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef blockchain fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    classDef external fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef user fill:#fff,stroke:#333,stroke-width:2px;
+
+    %% User Node
+    User((User / Learner)):::user
+
+    %% External Services
+    subgraph External_Services ["External Services"]
+        Farcaster["Farcaster Protocol<br/>(Social Graph & Auth)"]:::external
+        RPC["RPC Nodes<br/>(Base / Base Sepolia)"]:::external
+    end
+
+    %% SynauLearn Application
+    subgraph SynauLearn_App ["SynauLearn Frontend (Next.js 16)"]
+        direction TB
+        
+        %% Clients
+        Layout["Root Layout<br/>(Providers Wrapper)"]:::frontend
+        PWA["PWA Module<br/>(Service Worker)"]:::frontend
+        
+        %% Providers
+        subgraph Providers ["Context Providers"]
+            direction TB
+            AuthProv[AuthKitProvider]:::frontend
+            ConvexProv[ConvexClientProvider]:::frontend
+            WagmiProv[WagmiProvider]:::frontend
+            OnchainProv[OnchainKitProvider]:::frontend
+        end
+        
+        %% Pages & Components
+        Pages["App Pages<br/>(Home, Courses, Lessons)"]:::frontend
+        MiniappSDK["Farcaster Miniapp SDK"]:::frontend
+    end
+
+    %% Convex Backend
+    subgraph Convex_Cloud ["Convex Backend (Serverless)"]
+        direction TB
+        
+        %% Functions
+        Functions["Public/Internal Functions<br/>(Queries & Mutations)"]:::backend
+        
+        %% Database Schema
+        subgraph Database ["Convex Database"]
+            UsersTable[("Users")]:::backend
+            ContentTable[("Courses/Lessons/Cards")]:::backend
+            ProgressTable[("UserProgress")]:::backend
+            BadgesTable[("MintedBadges")]:::backend
+        end
+    end
+
+    %% Blockchain Layer
+    subgraph Blockchain_Layer ["Base Blockchain"]
+        SmartContracts["Smart Contracts<br/>(Badges/Certificates)"]:::blockchain
+        Wallet["Smart Wallet / EOA"]:::blockchain
+    end
+
+    %% Relationships
+    User -->|Interacts| SynauLearn_App
+    User -->|Connects| Wallet
+
+    %% Frontend Internal
+    Layout --> Providers
+    Providers --> Pages
+    Pages --> MiniappSDK
+    PWA -.-> Pages
+
+    %% Frontend <-> External
+    AuthProv -->|SIWF| Farcaster
+    MiniappSDK -->|Frame Interaction| Farcaster
+    WagmiProv -->|JSON-RPC| RPC
+
+    %% Frontend <-> Backend
+    ConvexProv <-->|WebSocket/Sync| Functions
+    Functions -->|Read/Write| Database
+
+    %% Frontend <-> Blockchain
+    OnchainProv -->|Tx Submission| Wallet
+    Wallet -->|Mint/Sign| SmartContracts
+    
+    %% Backend <-> Blockchain (Optional Verification)
+    Functions -.->|Verify Mint| RPC
+
+    %% Data Relationships
+    UsersTable --- ProgressTable
+    ContentTable --- ProgressTable
+    UsersTable --- BadgesTable
+```
+
 #### Project Structure
 ```
 SynauLearn/
