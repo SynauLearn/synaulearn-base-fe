@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useAccount } from "wagmi";
 
 // Local type definition (moved from supabase)
 type DifficultyLevel = 'Basic' | 'Intermediate' | 'Advanced' | 'Professional';
@@ -66,6 +67,7 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
   const { t } = useLocale();
   const { context } = useMiniKit();
   const siwfProfile = useSIWFProfile();
+  const { address, isConnected } = useAccount();
 
   // Get FID from MiniKit or SIWF
   const fid = context?.user?.fid || siwfProfile.fid;
@@ -117,14 +119,16 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
   // Search query
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Create or get user in Convex when FID is available
+  // Create or get user in Convex when wallet is connected
   useEffect(() => {
     async function ensureUser() {
-      if (!fid) return;
+      // Wallet is required for user creation
+      if (!address || !isConnected) return;
 
       try {
         const user = await getOrCreateUser({
-          fid,
+          wallet_address: address,
+          fid: fid || undefined,
           username: username || undefined,
           display_name: displayName || undefined,
         });
@@ -137,7 +141,7 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
     }
 
     ensureUser();
-  }, [fid, username, displayName, getOrCreateUser]);
+  }, [address, isConnected, fid, username, displayName, getOrCreateUser]);
 
   // Build courses with progress from database
   const coursesWithProgress = useMemo(() => {

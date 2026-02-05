@@ -10,7 +10,7 @@ interface LeaderboardProps {
 
 interface LeaderboardUser {
   id: string;
-  fid: number;
+  fid?: number;  // Optional since schema change
   username: string | null;
   display_name: string | null;
   total_xp: number;
@@ -75,7 +75,7 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
   };
 
   const getDisplayName = (user: LeaderboardUser) => {
-    return user.display_name || user.username || `User ${user.fid}`;
+    return user.display_name || user.username || (user.fid ? `User ${user.fid}` : 'Wallet User');
   };
 
   return (
@@ -163,8 +163,8 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
               <div
                 key={user.id}
                 className={`flex items-center gap-4 p-4 rounded-2xl transition-colors ${user.isCurrentUser
-                    ? 'bg-blue-500/10 border-2 border-blue-500'
-                    : 'bg-slate-900/50 border border-slate-800'
+                  ? 'bg-blue-500/10 border-2 border-blue-500'
+                  : 'bg-slate-900/50 border border-slate-800'
                   }`}
               >
                 {/* Rank */}
@@ -180,14 +180,14 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
 
                 {/* Avatar */}
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 ${user.rank === 1
-                    ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
-                    : user.rank === 2
-                      ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800'
-                      : user.rank === 3
-                        ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
-                        : user.isCurrentUser
-                          ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
-                          : 'bg-slate-800 text-gray-300'
+                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
+                  : user.rank === 2
+                    ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800'
+                    : user.rank === 3
+                      ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
+                      : user.isCurrentUser
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+                        : 'bg-slate-800 text-gray-300'
                   }`}>
                   {getInitials(user.display_name || user.username)}
                 </div>

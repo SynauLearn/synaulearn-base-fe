@@ -42,7 +42,9 @@ export const insertProgress = mutation({
         const users = await ctx.db.query("users").collect();
         const userFidToId: Record<number, Id<"users">> = {};
         for (const user of users) {
-            userFidToId[user.fid] = user._id;
+            if (user.fid !== undefined) {
+                userFidToId[user.fid] = user._id;
+            }
         }
 
         // Build card question to ID mapping
@@ -113,7 +115,9 @@ export const insertBadges = mutation({
         const users = await ctx.db.query("users").collect();
         const userFidToId: Record<number, Id<"users">> = {};
         for (const user of users) {
-            userFidToId[user.fid] = user._id;
+            if (user.fid !== undefined) {
+                userFidToId[user.fid] = user._id;
+            }
         }
 
         // Build course title to ID mapping

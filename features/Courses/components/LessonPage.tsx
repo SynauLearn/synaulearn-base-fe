@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useAccount } from "wagmi";
 import { Progress } from "@/components/ui/progress";
 import ResultPopup from "./ResultPopup";
 import CompletePage from "./CompletePage";
@@ -25,6 +26,7 @@ const LessonPage = ({
 }: CardViewProps) => {
   const { context } = useMiniKit();
   const siwfProfile = useSIWFProfile();
+  const { address, isConnected } = useAccount();
 
   // Get FID from MiniKit or SIWF
   const fid = context?.user?.fid || siwfProfile.fid;
@@ -48,14 +50,16 @@ const LessonPage = ({
   const [showCompletion, setShowCompletion] = useState(false);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
-  // Create or get user in Convex when FID is available
+  // Create or get user in Convex when wallet is connected
   useEffect(() => {
     async function ensureUser() {
-      if (!fid) return;
+      // Wallet is required for user creation
+      if (!address || !isConnected) return;
 
       try {
         const user = await getOrCreateUser({
-          fid,
+          wallet_address: address,
+          fid: fid || undefined,
           username: username || undefined,
           display_name: displayName || undefined,
         });
@@ -68,7 +72,7 @@ const LessonPage = ({
     }
 
     ensureUser();
-  }, [fid, username, displayName, getOrCreateUser]);
+  }, [address, isConnected, fid, username, displayName, getOrCreateUser]);
 
   // Convert cards data
   const cards = cardsData || [];
