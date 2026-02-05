@@ -1,10 +1,23 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// ============ GET USER BY FID ============
+// ============ GET USER BY WALLET ============
+export const getByWallet = query({
+    args: { wallet_address: v.string() },
+    handler: async (ctx, args) => {
+        const normalizedWallet = args.wallet_address.toLowerCase();
+        return await ctx.db
+            .query("users")
+            .withIndex("by_wallet", (q) => q.eq("wallet_address", normalizedWallet))
+            .first();
+    },
+});
+
+// ============ GET USER BY FID (legacy support) ============
 export const getByFid = query({
     args: { fid: v.number() },
     handler: async (ctx, args) => {
+        if (!args.fid || args.fid === 0) return null;
         return await ctx.db
             .query("users")
             .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -13,34 +26,77 @@ export const getByFid = query({
 });
 
 // ============ GET OR CREATE USER ============
+// Primary lookup: wallet_address
+// Secondary: FID (for linking existing Farcaster users to new wallet)
 export const getOrCreate = mutation({
     args: {
-        fid: v.number(),
+        wallet_address: v.string(),
+        fid: v.optional(v.number()),
         username: v.optional(v.string()),
         display_name: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        // Check if user exists
-        const existing = await ctx.db
+        const normalizedWallet = args.wallet_address.toLowerCase();
+        const now = Date.now();
+
+        // Step 1: Look up by wallet address (primary identifier)
+        const existingByWallet = await ctx.db
             .query("users")
-            .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+            .withIndex("by_wallet", (q) => q.eq("wallet_address", normalizedWallet))
             .first();
 
-        if (existing) {
-            return existing;
+        if (existingByWallet) {
+            // User found by wallet - check if we should enrich with Farcaster data
+            const hasFid = args.fid && args.fid > 0;
+            const needsEnrichment = hasFid && !existingByWallet.fid;
+
+            if (needsEnrichment) {
+                // Wallet-only user is now connecting Farcaster - enrich!
+                await ctx.db.patch(existingByWallet._id, {
+                    fid: args.fid,
+                    username: args.username || existingByWallet.username,
+                    display_name: args.display_name || existingByWallet.display_name,
+                    updated_at: now,
+                });
+                console.log(`✅ Enriched user ${normalizedWallet} with FID ${args.fid}`);
+            }
+
+            return await ctx.db.get(existingByWallet._id);
         }
 
-        // Create new user
-        const now = Date.now();
+        // Step 2: User not found by wallet - check if they exist by FID
+        // (Farcaster user connecting with a new wallet)
+        if (args.fid && args.fid > 0) {
+            const existingByFid = await ctx.db
+                .query("users")
+                .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+                .first();
+
+            if (existingByFid) {
+                // Farcaster user exists but with different/no wallet - update with new wallet
+                await ctx.db.patch(existingByFid._id, {
+                    wallet_address: normalizedWallet,
+                    username: args.username || existingByFid.username,
+                    display_name: args.display_name || existingByFid.display_name,
+                    updated_at: now,
+                });
+                console.log(`✅ Linked wallet ${normalizedWallet} to existing FID ${args.fid}`);
+                return await ctx.db.get(existingByFid._id);
+            }
+        }
+
+        // Step 3: Completely new user - create
         const userId = await ctx.db.insert("users", {
-            fid: args.fid,
-            username: args.username,
+            wallet_address: normalizedWallet,
+            fid: args.fid && args.fid > 0 ? args.fid : undefined,
+            username: args.username || `${normalizedWallet.slice(0, 6)}...${normalizedWallet.slice(-4)}`,
             display_name: args.display_name,
             total_xp: 0,
             created_at: now,
             updated_at: now,
         });
 
+        console.log(`✅ Created new user: wallet=${normalizedWallet}, fid=${args.fid || 'none'}`);
         return await ctx.db.get(userId);
     },
 });

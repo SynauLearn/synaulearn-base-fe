@@ -16,6 +16,10 @@ export type LessonId = Id<"lessons">;
 export type CardId = Id<"cards">;
 
 // ============ USERS ============
+export function useUserByWallet(wallet_address: string | undefined) {
+    return useQuery(api.users.getByWallet, wallet_address ? { wallet_address } : "skip");
+}
+
 export function useUserByFid(fid: number | undefined) {
     return useQuery(api.users.getByFid, fid ? { fid } : "skip");
 }

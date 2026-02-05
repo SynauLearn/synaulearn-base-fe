@@ -3,7 +3,6 @@ import { ArrowLeft, Lock, Check, ExternalLink } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from './WalletConnect';
 import { BadgeContract } from '@/lib/badgeContract';
-import { getCourseNumber } from '@/lib/courseMapping';
 import { useMiniKit, usePrimaryButton } from '@coinbase/onchainkit/minikit';
 import { useSIWFProfile } from './SignInWithFarcaster';
 import { useToast } from './ui/Toast';
@@ -30,6 +29,7 @@ interface Course {
     minted: boolean;
     tokenId?: string;
     _id?: string;
+    course_number?: number; // Numeric ID for smart contract
 }
 
 export default function MintBadge({ onBack }: MintBadgeProps) {
@@ -54,25 +54,26 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
     const coursesProgress = useAllCoursesProgress(convexUser?._id);
     const userBadges = useUserBadges(convexUser?._id);
 
-    // Create or get user when FID/address is available
+    // Create or get user when wallet is connected
     useEffect(() => {
         const ensureUser = async () => {
-            if (fid || address) {
-                try {
-                    await getOrCreateUser({
-                        fid: fid || 0,
-                        // walletAddress removed as it's not in the schema
-                        username: fidUsername || address || undefined,
-                        display_name: fidDisplayName || 'Wallet User',
-                    });
-                } catch (error) {
-                    console.error('Error creating user:', error);
-                }
+            // Wallet is required for user creation
+            if (!address) return;
+
+            try {
+                await getOrCreateUser({
+                    wallet_address: address,
+                    fid: fid || undefined,
+                    username: fidUsername || undefined,
+                    display_name: fidDisplayName || 'Wallet User',
+                });
+            } catch (error) {
+                console.error('Error creating user:', error);
             }
         };
 
         ensureUser();
-    }, [fid, address, fidUsername, fidDisplayName, getOrCreateUser]);
+    }, [address, fid, fidUsername, fidDisplayName, getOrCreateUser]);
 
     // Build courses list with completion and minted status
     const courses: Course[] = useMemo(() => {
@@ -102,6 +103,7 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
                 minted,
                 tokenId: badge?.token_id,
                 _id: course._id,
+                course_number: course.course_number, // From Convex
             };
         });
     }, [allCourses, coursesProgress, userBadges]);
@@ -124,15 +126,15 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
             setMintingStatus('Preparing to mint...');
 
             console.log('🚀 Starting mint process for:', course.title);
-            console.log('🔍 Course ID (UUID):', course.id);
+            console.log('🔍 Course ID:', course.id);
 
-            // Get numeric course ID from mapping
-            const courseIdNum = getCourseNumber(course.id);
+            // Get numeric course ID from Convex
+            const courseIdNum = course.course_number;
 
             if (!courseIdNum) {
-                const errorMsg = `Mapping missing for ID: ${course.id}`;
+                const errorMsg = `Course number not set for: ${course.title}`;
                 console.error(errorMsg);
-                showToast(`❌ ${errorMsg}. Please contact support.`, 'error');
+                showToast(`❌ ${errorMsg}. Please run migration.`, 'error');
                 setMintingStatus('');
                 setMintingCourseId(null);
                 return;

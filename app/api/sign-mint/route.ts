@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { keccak256, encodePacked, recoverMessageAddress, Hex, Address } from 'viem';
+import { keccak256, encodePacked, Hex, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
-import { getCourseNumber } from '@/lib/courseMapping';
 import { Id } from '@/convex/_generated/dataModel';
 
 /**
@@ -69,27 +68,39 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get numeric course ID from mapping
-        const courseIdNumeric = getCourseNumber(courseId);
-        if (!courseIdNumeric) {
+        // Connect to Convex
+        const convex = new ConvexHttpClient(CONVEX_URL);
+
+        // Fetch course to get course_number
+        const course = await convex.query(api.courses.get, {
+            courseId: courseId as Id<'courses'>,
+        });
+
+        if (!course || !course.course_number) {
             return NextResponse.json(
-                { success: false, error: 'Course ID not found in mapping' },
+                { success: false, error: 'Course not found or missing course_number' },
                 { status: 400 }
             );
         }
 
-        // Connect to Convex
-        const convex = new ConvexHttpClient(CONVEX_URL);
+        const courseIdNumeric = course.course_number;
 
-        // Find user by FID or wallet address
+        // Find user by wallet address (primary) or FID (secondary)
         let user;
-        if (fid) {
+
+        // Primary lookup: wallet address
+        user = await convex.query(api.users.getByWallet, {
+            wallet_address: userAddress.toLowerCase()
+        });
+
+        // Secondary lookup: FID (if wallet not found)
+        if (!user && fid) {
             user = await convex.query(api.users.getByFid, { fid });
         }
 
         if (!user) {
             return NextResponse.json(
-                { success: false, error: 'User not found. Please complete the course first.' },
+                { success: false, error: 'User not found. Please connect your wallet first.' },
                 { status: 403 }
             );
         }

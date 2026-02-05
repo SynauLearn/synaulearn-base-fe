@@ -3,7 +3,6 @@ import { ArrowLeft, Edit, Lock, Trophy, Wallet } from 'lucide-react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
 import { BadgeContract } from '@/lib/badgeContract';
-import { getCourseNumber } from '@/lib/courseMapping';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { WalletConnect } from './WalletConnect';
 import { SignInWithFarcaster, useSIWFProfile } from './SignInWithFarcaster';
@@ -45,17 +44,19 @@ export default function Profile({ onBack }: ProfileProps) {
   const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
 
-  // Create or get user in Convex when FID is available
+  // Create or get user in Convex when wallet is connected
   useEffect(() => {
     async function ensureUser() {
-      if (!fid) {
+      // Wallet is required for user creation
+      if (!address || !isConnected) {
         setLoading(false);
         return;
       }
 
       try {
         const user = await getOrCreateUser({
-          fid,
+          wallet_address: address,
+          fid: fid || undefined,
           username: username || undefined,
           display_name: displayName || undefined,
         });
@@ -70,7 +71,7 @@ export default function Profile({ onBack }: ProfileProps) {
     }
 
     ensureUser();
-  }, [fid, username, displayName, getOrCreateUser]);
+  }, [address, isConnected, fid, username, displayName, getOrCreateUser]);
 
   // Build stats from Convex data
   const stats = {

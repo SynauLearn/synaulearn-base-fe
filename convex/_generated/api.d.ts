@@ -13,6 +13,7 @@ import type * as cards from "../cards.js";
 import type * as categories from "../categories.js";
 import type * as courses from "../courses.js";
 import type * as lessons from "../lessons.js";
+import type * as migrations_schemaMigrations from "../migrations/schemaMigrations.js";
 import type * as migrations_seedCards from "../migrations/seedCards.js";
 import type * as migrations_seedCardsBatch from "../migrations/seedCardsBatch.js";
 import type * as migrations_seedFromSupabase from "../migrations/seedFromSupabase.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   courses: typeof courses;
   lessons: typeof lessons;
+  "migrations/schemaMigrations": typeof migrations_schemaMigrations;
   "migrations/seedCards": typeof migrations_seedCards;
   "migrations/seedCardsBatch": typeof migrations_seedCardsBatch;
   "migrations/seedFromSupabase": typeof migrations_seedFromSupabase;

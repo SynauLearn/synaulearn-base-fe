@@ -4,14 +4,16 @@ import { v } from "convex/values";
 export default defineSchema({
     // ============ USERS ============
     users: defineTable({
-        fid: v.number(), // Farcaster ID
+        wallet_address: v.optional(v.string()),  // PRIMARY identifier (optional during migration)
+        fid: v.optional(v.number()),          // Farcaster ID (optional, for enrichment)
         username: v.optional(v.string()),
         display_name: v.optional(v.string()),
         total_xp: v.number(),
-        created_at: v.number(), // timestamp
+        created_at: v.number(),               // timestamp
         updated_at: v.number(),
     })
-        .index("by_fid", ["fid"]),
+        .index("by_wallet", ["wallet_address"])  // Primary lookup
+        .index("by_fid", ["fid"]),               // Secondary lookup for Farcaster
 
     // ============ CATEGORIES ============
     categories: defineTable({
@@ -35,11 +37,13 @@ export default defineSchema({
         difficulty: v.string(), // 'Basic' | 'Advanced' | 'Professional'
         category_id: v.optional(v.id("categories")),
         total_lessons: v.number(),
+        course_number: v.optional(v.number()), // Unique numeric ID for smart contract
         created_at: v.number(),
     })
         .index("by_language", ["language"])
         .index("by_difficulty", ["difficulty"])
-        .index("by_category", ["category_id"]),
+        .index("by_category", ["category_id"])
+        .index("by_course_number", ["course_number"]),
 
     // ============ LESSONS ============
     lessons: defineTable({

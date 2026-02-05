@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Target, TrendingUp, Award } from 'lucide-react';
 import { SafeArea, useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useAccount } from 'wagmi';
 import { useLocale } from '@/lib/LocaleContext';
 import { useSIWFProfile } from './SignInWithFarcaster';
 import {
@@ -27,6 +28,7 @@ export default function HomeView({ userName = "User" }: HomeProps) {
   const { context } = useMiniKit();
   const { t } = useLocale();
   const siwfProfile = useSIWFProfile();
+  const { address, isConnected } = useAccount();
 
   // Get FID from MiniKit or SIWF
   const fid = context?.user?.fid || siwfProfile.fid;
@@ -42,14 +44,16 @@ export default function HomeView({ userName = "User" }: HomeProps) {
   const userStats = useUserStats(convexUserId ?? undefined);
   const coursesProgress = useAllCoursesProgress(convexUserId ?? undefined);
 
-  // Create or get user in Convex when FID is available
+  // Create or get user in Convex when wallet is connected
   useEffect(() => {
     async function ensureUser() {
-      if (!fid) return;
+      // Wallet is required for user creation
+      if (!address || !isConnected) return;
 
       try {
         const user = await getOrCreateUser({
-          fid,
+          wallet_address: address,
+          fid: fid || undefined,
           username: fidUsername || undefined,
           display_name: fidDisplayName || undefined,
         });
@@ -62,7 +66,7 @@ export default function HomeView({ userName = "User" }: HomeProps) {
     }
 
     ensureUser();
-  }, [fid, fidUsername, fidDisplayName, getOrCreateUser]);
+  }, [address, isConnected, fid, fidUsername, fidDisplayName, getOrCreateUser]);
 
   // Build stats from Convex data
   const stats = useMemo(() => ({

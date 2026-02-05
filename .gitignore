@@ -25,6 +25,7 @@
 
 # database
 /database
+/convex
 
 # misc
 .DS_Store
