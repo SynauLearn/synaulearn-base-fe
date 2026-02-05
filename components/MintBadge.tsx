@@ -140,11 +140,37 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
 
             console.log('🔢 Course numeric ID:', courseIdNum);
 
-            // Call mint function with status callback
-            // Pass number, not BigInt, as per lint error for this specific contract helper
+            // NEW: Request signature from backend first
+            setMintingStatus('Verifying course completion...');
+            console.log('🔐 Requesting signature from backend...');
+
+            const signResponse = await fetch('/api/sign-mint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userAddress: address,
+                    courseId: course.id,
+                    fid: fid || undefined,
+                }),
+            });
+
+            const signResult = await signResponse.json();
+
+            if (!signResult.success) {
+                console.error('❌ Signature failed:', signResult.error);
+                showToast(`❌ ${signResult.error}`, 'error');
+                setMintingStatus('');
+                setMintingCourseId(null);
+                return;
+            }
+
+            console.log('✅ Signature received:', signResult.signature.slice(0, 20) + '...');
+            setMintingStatus('Signature verified! Preparing transaction...');
+
+            // Call mint function with signature
             const result = await BadgeContract.mintBadge(
                 Number(courseIdNum),
-                // @ts-ignore - Assuming callback signature
+                signResult.signature as `0x${string}`,
                 (status: string) => {
                     setMintingStatus(status);
                     console.log('📊 Status:', status);

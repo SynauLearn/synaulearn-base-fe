@@ -14,7 +14,7 @@ export const courseIdToNumber: Record<string, number> = {
   'edcc44f4-02b6-476c-8768-51f165ca37c6': 3,
   'e7020156-f1ec-4fa2-afd3-2660da6b6719': 4,
   'e56e9279-aa5e-4657-9501-5aa1253b62d6': 5,
-  
+
   //pengenalan blockhain
   '8da85464-08f3-4708-bb47-451401fe8637': 6,
   '2d637ba2-db08-4fb1-bd06-2516aecac8ff': 7,
@@ -23,7 +23,13 @@ export const courseIdToNumber: Record<string, number> = {
   '7f9b298d-91ad-4d68-960f-9a2d3cf15373': 8,
 
   //introduction to base
-  '283c52db-bf78-42b3-b178-eb3a3b50280e': 9
+  '283c52db-bf78-42b3-b178-eb3a3b50280e': 9,
+
+  // Missing IDs reported by user (Hotfix)
+  // Smart Contract Fundamentals (from screenshot)
+  'jd7ekvteyenc9tbm5pcxgs96bn7zk4s8': 10,
+  // Other ID reported in text
+  'jd7fj1sng3cgb1pgg5j738k18s7zkcak': 11
 
   // Add more courses here as you create them
   // 'course-uuid-2': 2,
