@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Lock, Check, ExternalLink } from 'lucide-react';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useAccount, useSwitchChain, useWriteContract } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 import { ConnectButton } from './WalletConnect';
-import { BadgeContract } from '@/lib/badgeContract';
+import { BadgeContract, BADGE_CONTRACT_ADDRESS, BADGE_CONTRACT_ABI } from '@/lib/badgeContract';
 import { useMiniKit, usePrimaryButton } from '@coinbase/onchainkit/minikit';
 import { useSIWFProfile } from './SignInWithFarcaster';
 import { useToast } from './ui/Toast';
@@ -36,6 +36,7 @@ interface Course {
 export default function MintBadge({ onBack }: MintBadgeProps) {
     const { address, isConnected, chain } = useAccount();
     const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
+    const { writeContractAsync, isPending: isWritePending } = useWriteContract();
     const [mintingCourseId, setMintingCourseId] = useState<string | null>(null);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintingStatus, setMintingStatus] = useState<string>('');
@@ -207,66 +208,75 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
             }
 
             console.log('✅ Signature received:', signResult.signature.slice(0, 20) + '...');
-            setMintingStatus('Signature verified! Preparing transaction...');
+            setMintingStatus('Signature verified! Sending transaction...');
 
-            // Call mint function with signature
-            const result = await BadgeContract.mintBadge(
-                Number(courseIdNum),
-                signResult.signature as `0x${string}`,
-                (status: string) => {
-                    setMintingStatus(status);
-                    console.log('📊 Status:', status);
+            // Use writeContractAsync hook directly (fixes MiniKit context issues)
+            console.log('🎯 Calling writeContractAsync...');
+            setMintingStatus('Please approve in your wallet...');
+
+            let txHashResult: `0x${string}`;
+            try {
+                txHashResult = await writeContractAsync({
+                    address: BADGE_CONTRACT_ADDRESS,
+                    abi: BADGE_CONTRACT_ABI,
+                    functionName: 'mintBadge',
+                    args: [BigInt(courseIdNum), signResult.signature as `0x${string}`],
+                    chainId: baseSepolia.id,
+                });
+                console.log('✅ Transaction hash received:', txHashResult);
+            } catch (writeError) {
+                console.error('❌ Write contract failed:', writeError);
+                const errMessage = writeError instanceof Error ? writeError.message : String(writeError);
+
+                if (errMessage.includes('User rejected') || errMessage.includes('User denied')) {
+                    showToast('❌ Transaction rejected. Please approve in your wallet.', 'error');
+                } else if (errMessage.includes('insufficient funds')) {
+                    showToast('❌ Insufficient funds. Get Base Sepolia ETH from faucet.', 'error');
+                } else {
+                    showToast(`❌ Transaction failed: ${errMessage.slice(0, 100)}`, 'error');
                 }
+                setMintingStatus('');
+                setMintingCourseId(null);
+                return;
+            }
+
+            // Show transaction hash immediately
+            setTxHash(txHashResult);
+            setMintingStatus('Transaction sent! Confirming...');
+
+            setMintingStatus('Getting badge information...');
+
+            // Wait a bit for the transaction to be indexed
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const tokenId = await BadgeContract.getUserBadgeForCourse(
+                address as `0x${string}`,
+                courseIdNum
             );
 
-            // Show transaction hash immediately if available
-            if (result.txHash) {
-                setTxHash(result.txHash);
-                setMintingStatus('Transaction sent! Confirming...');
-            }
+            // Save to database using Convex
+            try {
+                setMintingStatus('Saving to database...');
 
-            if (result.success && result.txHash) {
-                setMintingStatus('Getting badge information...');
-
-                // Wait a bit for the transaction to be indexed
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                const tokenId = await BadgeContract.getUserBadgeForCourse(
-                    address as `0x${string}`,
-                    courseIdNum
-                );
-
-                // Save to database using Convex
-                try {
-                    setMintingStatus('Saving to database...');
-
-                    if (convexUser?._id) {
-                        await saveMintedBadge({
-                            userId: convexUser._id,
-                            courseId: course._id as any,
-                            tokenId: tokenId.toString(),
-                            txHash: result.txHash,
-                            walletAddress: address,
-                            // minted_at: Date.now(), // might not be in schema, removing to be safe or check api
-                        });
-                        console.log('✅ Badge saved to database');
-                    }
-                } catch (dbError) {
-                    console.error('❌ Database error:', dbError);
+                if (convexUser?._id) {
+                    await saveMintedBadge({
+                        userId: convexUser._id,
+                        courseId: course._id as any,
+                        tokenId: tokenId.toString(),
+                        txHash: txHashResult,
+                        walletAddress: address,
+                    });
+                    console.log('✅ Badge saved to database');
                 }
-
-                setMintingStatus('Badge minted successfully!');
-                showToast('✅ Badge minted successfully!', 'success');
-
-            } else {
-                // Handle failure
-                const errorMsg = result.error || 'Unknown error';
-                console.error('❌ Mint failed:', errorMsg);
-                if (!result.txHash) showToast(`❌ Mint failed: ${errorMsg}`, 'error');
-                setMintingStatus('');
+            } catch (dbError) {
+                console.error('❌ Database error:', dbError);
             }
-        } catch (error: any) {
-            const errorMsg = error.message || 'Unknown error';
+
+            setMintingStatus('Badge minted successfully!');
+            showToast('✅ Badge minted successfully!', 'success');
+
+        } catch (error: unknown) {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
             console.error('❌ Mint error:', errorMsg);
             if (!errorMsg.includes('User rejected')) showToast(`❌ Failed: ${errorMsg}`, 'error');
             setMintingStatus('');
