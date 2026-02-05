@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Menu, Bell, Search } from 'lucide-react';
-import { WalletConnect } from './WalletConnect';
+import { Menu } from 'lucide-react';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -29,20 +28,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
               />
               <span className="text-xl font-bold text-white dark:text-gray-100">SynauLearn</span>
             </div>
-          </div>
-
-          {/* Right: Wallet + Actions */}
-          <div className="flex items-center gap-2">
-            {/* Wallet Connect Button */}
-            <WalletConnect className="mr-2" showBalance={false} />
-
-            <button className="p-2 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <Search className="w-6 h-6 text-white dark:text-gray-100" />
-            </button>
-            <button className="p-2 hover:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition-colors relative">
-              <Bell className="w-6 h-6 text-white dark:text-gray-100" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
           </div>
         </div>
       </div>
