@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Lock, Check, ExternalLink } from 'lucide-react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
+import { baseSepolia } from 'wagmi/chains';
 import { ConnectButton } from './WalletConnect';
 import { BadgeContract } from '@/lib/badgeContract';
 import { useMiniKit, usePrimaryButton } from '@coinbase/onchainkit/minikit';
@@ -33,7 +34,8 @@ interface Course {
 }
 
 export default function MintBadge({ onBack }: MintBadgeProps) {
-    const { address, isConnected } = useAccount();
+    const { address, isConnected, chain } = useAccount();
+    const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
     const [mintingCourseId, setMintingCourseId] = useState<string | null>(null);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintingStatus, setMintingStatus] = useState<string>('');
@@ -127,6 +129,30 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
 
             console.log('🚀 Starting mint process for:', course.title);
             console.log('🔍 Course ID:', course.id);
+
+            // Check if we're on the correct chain (Base Sepolia)
+            if (chain?.id !== baseSepolia.id) {
+                console.log('🔄 Switching to Base Sepolia...');
+                setMintingStatus('Switching to Base Sepolia network...');
+
+                try {
+                    await switchChain({ chainId: baseSepolia.id });
+                    console.log('✅ Switched to Base Sepolia');
+                } catch (switchError) {
+                    const errMessage = switchError instanceof Error ? switchError.message : String(switchError);
+                    console.error('❌ Chain switch failed:', errMessage);
+
+                    // Check if user rejected
+                    if (errMessage.includes('User rejected') || errMessage.includes('User denied')) {
+                        showToast('❌ Network switch cancelled. Please switch to Base Sepolia manually.', 'error');
+                    } else {
+                        showToast('❌ Failed to switch network. Please switch to Base Sepolia manually in your wallet.', 'error');
+                    }
+                    setMintingStatus('');
+                    setMintingCourseId(null);
+                    return;
+                }
+            }
 
             // Get numeric course ID from Convex
             const courseIdNum = course.course_number;

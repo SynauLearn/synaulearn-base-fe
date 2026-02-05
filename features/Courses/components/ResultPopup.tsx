@@ -114,7 +114,7 @@ export default function ResultPopup({
               {isCorrect ? (
                 <button
                   onClick={onClose}
-                  className={`w-full bg-primary text-white font-semibold px-6 py-4 rounded-full hover:opacity-90 transition`}
+                  className={`w-full bg-blue-600 text-white font-semibold px-6 py-4 rounded-full hover:bg-blue-700 transition`}
                 >
                   Continue
                 </button>
@@ -122,7 +122,7 @@ export default function ResultPopup({
                 <div className="flex flex-col gap-2 w-full">
                   <button
                     onClick={onRetry || onClose}
-                    className="w-full bg-primary text-white font-semibold px-4 py-2 rounded-full hover:bg-red-50 transition"
+                    className="w-full bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition"
                   >
                     Try Again
                   </button>

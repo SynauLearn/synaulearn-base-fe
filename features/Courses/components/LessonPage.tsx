@@ -279,7 +279,7 @@ const LessonPage = ({
             {isFlipped && (
               <button
                 onClick={handleFlashcardContinue}
-                className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl transition-all"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl transition-all"
               >
                 Continue to Quiz →
               </button>
@@ -306,7 +306,7 @@ const LessonPage = ({
                   key={option.id}
                   onClick={() => handleSelectedOption(option.id)}
                   className={`w-full flex items-center text-left px-6 py-4 rounded-2xl font-medium bg-[#2a2d42] text-white border-2 ${selectedAnswer === option.id
-                    ? "border-primary"
+                    ? "border-blue-500"
                     : "hover:bg-[#333649] border-transparent"
                     }`}
                 >
@@ -320,8 +320,8 @@ const LessonPage = ({
               <button
                 onClick={handleAnswerSelect}
                 disabled={!selectedAnswer}
-                className={`w-full ${!selectedAnswer ? "bg-gray-300" : "bg-primary"
-                  } flex items-center justify-center text-white px-6 py-4 rounded-4xl font-medium`}
+                className={`w-full ${!selectedAnswer ? "bg-gray-500" : "bg-blue-600 hover:bg-blue-700"
+                  } flex items-center justify-center text-white px-6 py-4 rounded-4xl font-medium transition-colors`}
               >
                 Next
               </button>

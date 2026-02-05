@@ -1,6 +1,6 @@
 import { createPublicClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
-import { writeContract, switchChain } from 'wagmi/actions';
+import { writeContract } from 'wagmi/actions';
 import type { Config } from 'wagmi';
 import { BADGE_ABI } from './abi/SynauLearnBadgeV2';
 
@@ -162,33 +162,17 @@ export const BadgeContract = {
   },
 
   // Mint badge - NEW: requires signature from backend
+  // NOTE: Chain switching is handled by the component using useSwitchChain hook
   async mintBadge(
     courseId: number,
     signature: `0x${string}`,
     onStatusUpdate?: (status: string) => void
   ): Promise<{ success: boolean; txHash?: `0x${string}`; error?: string }> {
     try {
-      console.log('🎯 Step 1: Switching to Base Sepolia...');
-      onStatusUpdate?.('Switching to Base Sepolia network...');
-
-      try {
-        await switchChain(config, { chainId: baseSepolia.id });
-        console.log('✅ Network switched to Base Sepolia');
-      } catch (switchError) {
-        console.error('❌ Network switch failed:', switchError);
-        const errMessage = switchError instanceof Error ? switchError.message : String(switchError);
-
-        // Check if user rejected network switch
-        if (errMessage.includes('User rejected') || errMessage.includes('User denied')) {
-          return { success: false, error: 'Network switch cancelled. Please switch to Base Sepolia and try again.' };
-        }
-        return { success: false, error: 'Failed to switch to Base Sepolia network. Please switch manually in your wallet.' };
-      }
-
-      console.log('🎯 Step 2: Preparing transaction...');
+      console.log('🎯 Step 1: Preparing transaction...');
       onStatusUpdate?.('Preparing transaction...');
 
-      console.log('🎯 Step 3: Sending transaction...');
+      console.log('🎯 Step 2: Sending transaction...');
       onStatusUpdate?.('Please approve in your wallet...');
 
       // NEW: mintBadge requires courseId AND signature
