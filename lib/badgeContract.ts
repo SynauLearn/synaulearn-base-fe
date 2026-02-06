@@ -19,7 +19,7 @@ if (typeof window === 'undefined') {
 }
 
 // New UUPS Upgradeable Contract (V2) with ECDSA Signature Verification
-export const BADGE_CONTRACT_ADDRESS = '0xC824AC961bb05d627363Bcf4A1C4a15390C6B0a1' as const;
+export const BADGE_CONTRACT_ADDRESS = '0x505972A66F8Bb9CA4300652E3726786fc1eF01A2' as const;
 export const BADGE_CONTRACT_ABI = BADGE_ABI;
 
 // Public client for reading
