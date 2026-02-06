@@ -4,7 +4,7 @@ import { useAccount, useSwitchChain, useWriteContract } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 import { ConnectButton } from './WalletConnect';
 import { BadgeContract, BADGE_CONTRACT_ADDRESS, BADGE_CONTRACT_ABI } from '@/lib/badgeContract';
-import { useMiniKit, usePrimaryButton } from '@coinbase/onchainkit/minikit';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useSIWFProfile } from './SignInWithFarcaster';
 import { useToast } from './ui/Toast';
 import {
@@ -286,20 +286,7 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
     };
 
     // Native Primary Button for Base App
-    usePrimaryButton(
-        {
-            text: courseToMint
-                ? `Mint ${courseToMint.title} Badge`
-                : "Complete a Course to Mint",
-            loading: !!mintingCourseId,
-            disabled: !courseToMint || !!mintingCourseId || !isConnected,
-        },
-        () => {
-            if (courseToMint) {
-                handleMintBadge(courseToMint);
-            }
-        }
-    );
+
 
     if (loading) {
         return (
