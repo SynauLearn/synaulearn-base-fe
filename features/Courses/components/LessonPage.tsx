@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { API, Card as CardType } from "@/lib/api";
+import { useAccount } from "wagmi";
 import { Progress } from "@/components/ui/progress";
 import ResultPopup from "./ResultPopup";
 import CompletePage from "./CompletePage";
-// import LessonComplete from "./LessonComplete";
+import { useSIWFProfile } from "@/components/SignInWithFarcaster";
+import { useCardsByLesson, useUserByFid, useSaveCardProgress, useGetOrCreateUser, UserId } from "@/lib/convexApi";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface CardViewProps {
   lessonId: string;
@@ -23,8 +25,21 @@ const LessonPage = ({
   onComplete,
 }: CardViewProps) => {
   const { context } = useMiniKit();
-  const [cards, setCards] = useState<CardType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const siwfProfile = useSIWFProfile();
+  const { address, isConnected } = useAccount();
+
+  // Get FID from MiniKit or SIWF
+  const fid = context?.user?.fid || siwfProfile.fid;
+  const username = context?.user?.username || siwfProfile.username;
+  const displayName = context?.user?.displayName || siwfProfile.displayName;
+
+  // Convex hooks
+  const getOrCreateUser = useGetOrCreateUser();
+  const convexUser = useUserByFid(fid);
+  const saveCardProgress = useSaveCardProgress();
+  const cardsData = useCardsByLesson(lessonId as Id<"lessons">);
+
+  const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [step, setStep] = useState<Step>("flashcard");
   const [isFlipped, setIsFlipped] = useState(false);
@@ -33,38 +48,35 @@ const LessonPage = ({
   const [xpEarned, setXpEarned] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
-  // Load cards from Supabase
+  // Create or get user in Convex when wallet is connected
   useEffect(() => {
-    async function loadCards() {
+    async function ensureUser() {
+      // Wallet is required for user creation
+      if (!address || !isConnected) return;
+
       try {
-        setLoading(true);
-
-        // Get or create user
-        if (context?.user?.fid) {
-          const user = await API.getUserOrCreate(
-            context.user.fid,
-            context.user.username,
-            context.user.displayName
-          );
-          setUserId(user.id);
+        const user = await getOrCreateUser({
+          wallet_address: address,
+          fid: fid || undefined,
+          username: username || undefined,
+          display_name: displayName || undefined,
+        });
+        if (user) {
+          setConvexUserId(user._id);
         }
-
-        // Fetch cards
-        const fetchedCards = await API.getCardsForLesson(lessonId);
-        setCards(fetchedCards);
       } catch (error) {
-        console.error("Error loading cards:", error);
-        alert("Failed to load lesson. Please try again.");
-      } finally {
-        setLoading(false);
+        console.error('Error creating user:', error);
       }
     }
 
-    loadCards();
-  }, [lessonId, context]);
+    ensureUser();
+  }, [address, isConnected, fid, username, displayName, getOrCreateUser]);
+
+  // Convert cards data
+  const cards = cardsData || [];
+  const loading = cardsData === undefined;
 
   if (loading) {
     return (
@@ -132,9 +144,13 @@ const LessonPage = ({
       setCorrectCount(correctCount + 1);
     }
 
-    if (userId) {
+    if (convexUserId && currentCard) {
       try {
-        await API.saveCardProgress(userId, currentCard.id, isCorrect);
+        await saveCardProgress({
+          userId: convexUserId,
+          cardId: currentCard._id,
+          quizCorrect: isCorrect,
+        });
       } catch (error) {
         console.error("Error saving progress:", error);
       }
@@ -263,7 +279,7 @@ const LessonPage = ({
             {isFlipped && (
               <button
                 onClick={handleFlashcardContinue}
-                className="w-full bg-primary hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl transition-all"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl transition-all"
               >
                 Continue to Quiz →
               </button>
@@ -289,11 +305,10 @@ const LessonPage = ({
                 <button
                   key={option.id}
                   onClick={() => handleSelectedOption(option.id)}
-                  className={`w-full flex items-center text-left px-6 py-4 rounded-2xl font-medium bg-[#2a2d42] text-white border-2 ${
-                    selectedAnswer === option.id
-                      ? "border-primary"
-                      : "hover:bg-[#333649] border-transparent"
-                  }`}
+                  className={`w-full flex items-center text-left px-6 py-4 rounded-2xl font-medium bg-[#2a2d42] text-white border-2 ${selectedAnswer === option.id
+                    ? "border-blue-500"
+                    : "hover:bg-[#333649] border-transparent"
+                    }`}
                 >
                   <span className="font-bold mr-2">{option.id}.</span>
                   {option.text}
@@ -305,9 +320,8 @@ const LessonPage = ({
               <button
                 onClick={handleAnswerSelect}
                 disabled={!selectedAnswer}
-                className={`w-full ${
-                  !selectedAnswer ? "bg-gray-300" : "bg-primary"
-                } flex items-center justify-center text-white px-6 py-4 rounded-4xl font-medium`}
+                className={`w-full ${!selectedAnswer ? "bg-gray-500" : "bg-blue-600 hover:bg-blue-700"
+                  } flex items-center justify-center text-white px-6 py-4 rounded-4xl font-medium transition-colors`}
               >
                 Next
               </button>
@@ -320,9 +334,8 @@ const LessonPage = ({
           onClose={handleNext}
           isCorrect={isCorrect}
           onRetry={handleRetry}
-          correctAnswer={`${currentCard.quiz_correct_answer}. ${
-            quizOptions.find((o) => o.correct)?.text
-          }`}
+          correctAnswer={`${currentCard.quiz_correct_answer}. ${quizOptions.find((o) => o.correct)?.text
+            }`}
         />
       </div>
     </div>

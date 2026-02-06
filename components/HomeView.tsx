@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Target, TrendingUp, Award } from 'lucide-react';
-import { API } from '@/lib/api';
 import { SafeArea, useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useAccount } from 'wagmi';
 import { useLocale } from '@/lib/LocaleContext';
-// import { WalletComponents } from './WalletComponents';
-// import { ConnectWallet, WalletIsland } from '@coinbase/onchainkit/wallet';
+import { useSIWFProfile } from './SignInWithFarcaster';
+import {
+  useUserByFid,
+  useUserStats,
+  useCourses,
+  useAllCoursesProgress,
+  useGetOrCreateUser,
+  UserId
+} from '@/lib/convexApi';
 
 interface HomeProps {
   userName?: string;
@@ -20,67 +27,78 @@ interface CourseProgress {
 export default function HomeView({ userName = "User" }: HomeProps) {
   const { context } = useMiniKit();
   const { t } = useLocale();
-  const [inProgressCourses, setInProgressCourses] = useState<CourseProgress[]>([]);
-  const [stats, setStats] = useState({
-    totalXP: 0,
-    cardsCompleted: 0,
-    coursesCompleted: 0,
-    streak: 3, // TODO: Calculate real streak
-  });
-  const [loading, setLoading] = useState(true);
+  const siwfProfile = useSIWFProfile();
+  const { address, isConnected } = useAccount();
 
+  // Get FID from MiniKit or SIWF
+  const fid = context?.user?.fid || siwfProfile.fid;
+  const fidUsername = context?.user?.username || siwfProfile.username;
+  const fidDisplayName = context?.user?.displayName || siwfProfile.displayName;
+
+  // Convex hooks
+  const getOrCreateUser = useGetOrCreateUser();
+  const convexUser = useUserByFid(fid);
+  const courses = useCourses();
+
+  const [convexUserId, setConvexUserId] = useState<UserId | null>(null);
+  const userStats = useUserStats(convexUserId ?? undefined);
+  const coursesProgress = useAllCoursesProgress(convexUserId ?? undefined);
+
+  // Create or get user in Convex when wallet is connected
   useEffect(() => {
-    async function loadUserProgress() {
+    async function ensureUser() {
+      // Wallet is required for user creation
+      if (!address || !isConnected) return;
+
       try {
-        setLoading(true);
-
-        if (context?.user?.fid) {
-          // Get or create user
-          const user = await API.getUserOrCreate(
-            context.user.fid,
-            context.user.username,
-            context.user.displayName
-          );
-
-          // Get user stats
-          const userStats = await API.getUserStats(user.id);
-          setStats({
-            totalXP: userStats.totalXP,
-            cardsCompleted: userStats.cardsCompleted,
-            coursesCompleted: userStats.coursesCompleted,
-            streak: 3, // TODO: Calculate real streak
-          });
-
-          // Get courses in progress (progress > 0 but < 100)
-          const courses = await API.getCourses();
-          const coursesWithProgress = await Promise.all(
-            courses.map(async (course) => {
-              const progress = await API.getCourseProgressPercentage(user.id, course.id);
-              return {
-                courseId: course.id,
-                title: course.title,
-                progress,
-                emoji: course.emoji,
-              };
-            })
-          );
-
-          // Filter courses that are in progress (0 < progress < 100)
-          const inProgress = coursesWithProgress
-            .filter(c => c.progress > 0 && c.progress < 100)
-            .slice(0, 2); // Show max 2
-
-          setInProgressCourses(inProgress);
+        const user = await getOrCreateUser({
+          wallet_address: address,
+          fid: fid || undefined,
+          username: fidUsername || undefined,
+          display_name: fidDisplayName || undefined,
+        });
+        if (user) {
+          setConvexUserId(user._id);
         }
       } catch (error) {
-        console.error("Error loading user progress:", error);
-      } finally {
-        setLoading(false);
+        console.error('Error creating user:', error);
       }
     }
 
-    loadUserProgress();
-  }, [context]);
+    ensureUser();
+  }, [address, isConnected, fid, fidUsername, fidDisplayName, getOrCreateUser]);
+
+  // Build stats from Convex data
+  const stats = useMemo(() => ({
+    totalXP: userStats?.totalXP ?? 0,
+    cardsCompleted: userStats?.cardsCompleted ?? 0,
+    coursesCompleted: userStats?.coursesCompleted ?? 0,
+    streak: 3, // TODO: Calculate real streak
+  }), [userStats]);
+
+  // Build courses in progress from Convex data
+  const inProgressCourses = useMemo(() => {
+    if (!courses || !coursesProgress) return [];
+
+    // Create progress map
+    const progressMap: Record<string, number> = {};
+    for (const cp of coursesProgress) {
+      progressMap[cp.courseId] = cp.progress;
+    }
+
+    // Get courses with progress between 0 and 100
+    return courses
+      .map(course => ({
+        courseId: course._id,
+        title: course.title,
+        progress: progressMap[course._id] ?? 0,
+        emoji: course.emoji || '📚',
+      }))
+      .filter(c => c.progress > 0 && c.progress < 100)
+      .slice(0, 2); // Show max 2
+  }, [courses, coursesProgress]);
+
+  const loading = courses === undefined;
 
   if (loading) {
     return (

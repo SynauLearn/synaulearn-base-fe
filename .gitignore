@@ -75,3 +75,12 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+sql_dump/
+
+# PWA
+**/public/sw.js
+**/public/workbox-*.js
+**/public/swe-worker-*.js
+
+*.sol

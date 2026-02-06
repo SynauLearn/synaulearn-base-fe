@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Star, Trophy, Medal, Award } from 'lucide-react';
-import { API } from '@/lib/api';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useSIWFProfile } from './SignInWithFarcaster';
+import { useLeaderboard } from '@/lib/convexApi';
 
 interface LeaderboardProps {
   onBack: () => void;
@@ -9,7 +10,7 @@ interface LeaderboardProps {
 
 interface LeaderboardUser {
   id: string;
-  fid: number;
+  fid?: number;  // Optional since schema change
   username: string | null;
   display_name: string | null;
   total_xp: number;
@@ -19,43 +20,36 @@ interface LeaderboardUser {
 
 export default function Leaderboard({ onBack }: LeaderboardProps) {
   const { context } = useMiniKit();
+  const siwfProfile = useSIWFProfile();
   const [activeTab, setActiveTab] = useState<'weekly' | 'monthly' | 'alltime'>('alltime');
-  const [users, setUsers] = useState<LeaderboardUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
 
-  // Use useCallback to memoize the function
-  const loadLeaderboard = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch top users
-      const leaderboardData = await API.getLeaderboard(50); // Get top 50
-      
-      // Add rank and check for current user
-      const rankedUsers = leaderboardData.map((user, index) => ({
-        ...user,
-        rank: index + 1,
-        isCurrentUser: context?.user?.fid === user.fid,
-      }));
+  // Get FID from MiniKit or SIWF
+  const currentFid = context?.user?.fid || siwfProfile.fid;
 
-      // Find current user's rank
-      const currentUser = rankedUsers.find(u => u.isCurrentUser);
-      if (currentUser) {
-        setCurrentUserRank(currentUser.rank!);
-      }
+  // Convex hook for leaderboard
+  const leaderboardData = useLeaderboard(50);
 
-      setUsers(rankedUsers);
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [context?.user?.fid]); // Only depend on fid, not entire context
+  // Transform data with ranks and current user flag
+  const users = useMemo(() => {
+    if (!leaderboardData) return [];
+    return leaderboardData.map((user, index) => ({
+      id: user._id,
+      fid: user.fid,
+      username: user.username || null,
+      display_name: user.display_name || null,
+      total_xp: user.total_xp,
+      rank: index + 1,
+      isCurrentUser: currentFid === user.fid,
+    }));
+  }, [leaderboardData, currentFid]);
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, [loadLeaderboard, activeTab]);
+  // Find current user's rank
+  const currentUserRank = useMemo(() => {
+    const currentUser = users.find(u => u.isCurrentUser);
+    return currentUser?.rank ?? null;
+  }, [users]);
+
+  const loading = leaderboardData === undefined;
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -81,7 +75,7 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
   };
 
   const getDisplayName = (user: LeaderboardUser) => {
-    return user.display_name || user.username || `User ${user.fid}`;
+    return user.display_name || user.username || (user.fid ? `User ${user.fid}` : 'Wallet User');
   };
 
   return (
@@ -104,9 +98,8 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
         <div className="flex border-b border-slate-800">
           <button
             onClick={() => setActiveTab('weekly')}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors relative ${
-              activeTab === 'weekly' ? 'text-blue-500' : 'text-gray-400'
-            }`}
+            className={`flex-1 px-6 py-4 font-semibold transition-colors relative ${activeTab === 'weekly' ? 'text-blue-500' : 'text-gray-400'
+              }`}
           >
             Weekly
             {activeTab === 'weekly' && (
@@ -115,9 +108,8 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
           </button>
           <button
             onClick={() => setActiveTab('monthly')}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors relative ${
-              activeTab === 'monthly' ? 'text-blue-500' : 'text-gray-400'
-            }`}
+            className={`flex-1 px-6 py-4 font-semibold transition-colors relative ${activeTab === 'monthly' ? 'text-blue-500' : 'text-gray-400'
+              }`}
           >
             Monthly
             {activeTab === 'monthly' && (
@@ -126,9 +118,8 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
           </button>
           <button
             onClick={() => setActiveTab('alltime')}
-            className={`flex-1 px-6 py-4 font-semibold transition-colors relative ${
-              activeTab === 'alltime' ? 'text-blue-500' : 'text-gray-400'
-            }`}
+            className={`flex-1 px-6 py-4 font-semibold transition-colors relative ${activeTab === 'alltime' ? 'text-blue-500' : 'text-gray-400'
+              }`}
           >
             All Time
             {activeTab === 'alltime' && (
@@ -171,11 +162,10 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
             {users.slice(0, 50).map((user) => (
               <div
                 key={user.id}
-                className={`flex items-center gap-4 p-4 rounded-2xl transition-colors ${
-                  user.isCurrentUser 
-                    ? 'bg-blue-500/10 border-2 border-blue-500' 
-                    : 'bg-slate-900/50 border border-slate-800'
-                }`}
+                className={`flex items-center gap-4 p-4 rounded-2xl transition-colors ${user.isCurrentUser
+                  ? 'bg-blue-500/10 border-2 border-blue-500'
+                  : 'bg-slate-900/50 border border-slate-800'
+                  }`}
               >
                 {/* Rank */}
                 <div className="w-12 text-center flex items-center justify-center">
@@ -189,25 +179,23 @@ export default function Leaderboard({ onBack }: LeaderboardProps) {
                 </div>
 
                 {/* Avatar */}
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 ${
-                  user.rank === 1 
-                    ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
-                    : user.rank === 2
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0 ${user.rank === 1
+                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
+                  : user.rank === 2
                     ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800'
                     : user.rank === 3
-                    ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
-                    : user.isCurrentUser
-                    ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
-                    : 'bg-slate-800 text-gray-300'
-                }`}>
+                      ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
+                      : user.isCurrentUser
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+                        : 'bg-slate-800 text-gray-300'
+                  }`}>
                   {getInitials(user.display_name || user.username)}
                 </div>
 
                 {/* Name and XP */}
                 <div className="flex-1 min-w-0">
-                  <h3 className={`font-semibold truncate ${
-                    user.isCurrentUser ? 'text-blue-400' : 'text-white'
-                  }`}>
+                  <h3 className={`font-semibold truncate ${user.isCurrentUser ? 'text-blue-400' : 'text-white'
+                    }`}>
                     {getDisplayName(user)}
                     {user.isCurrentUser && (
                       <span className="ml-2 text-xs text-blue-400">(You)</span>
