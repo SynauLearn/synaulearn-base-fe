@@ -14,7 +14,8 @@
     "home": "Beranda",
     "courses": "Kursus",
     "profile": "Profil",
-    "leaderboard": "Papan Peringkat"
+    "leaderboard": "Papan Peringkat",
+    "mintBadge": "Lencana"
   },
   "drawer": {
     "viewProfile": "Lihat Profil",

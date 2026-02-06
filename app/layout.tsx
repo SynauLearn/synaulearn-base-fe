@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Code_Pro } from "next/font/google";
+import ReactLenis from "lenis/react";
 import { minikitConfig } from "@/minikit.config";
 import { ClientProviders } from "./ClientProviders";
 import "./globals.css";
@@ -32,7 +32,16 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${miniapp.name}`,
     },
     description: miniapp.description,
-    keywords: ["web3 learning", "crypto education", "blockchain courses", "NFT badges", "learn crypto", "Base blockchain", "SynauLearn", "micro-learning"],
+    keywords: [
+      "web3 learning",
+      "crypto education",
+      "blockchain courses",
+      "NFT badges",
+      "learn crypto",
+      "Base blockchain",
+      "SynauLearn",
+      "micro-learning",
+    ],
     authors: [{ name: "SynauLearn Team" }],
     creator: "SynauLearn",
     publisher: "SynauLearn",
@@ -42,9 +51,7 @@ export async function generateMetadata(): Promise<Metadata> {
       capable: true,
       title: miniapp.name,
       statusBarStyle: "default",
-      startupImage: [
-        "/icon.png",
-      ],
+      startupImage: ["/icon.png"],
     },
 
     // Favicon & Icons
@@ -126,20 +133,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-});
-
-const sourceCodePro = Source_Code_Pro({
-  variable: "--font-source-code-pro",
-  subsets: ["latin"],
-  display: "swap",
-  preload: false,
-});
-
 /**
  * JSON-LD Structured Data for SEO
  */
@@ -147,24 +140,24 @@ function JsonLd() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "SynauLearn",
-    "description": minikitConfig.miniapp.description,
-    "url": process.env.NEXT_PUBLIC_APP_URL || "https://synaulearn.space",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "Web",
-    "offers": {
+    name: "SynauLearn",
+    description: minikitConfig.miniapp.description,
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://synaulearn.space",
+    applicationCategory: "EducationalApplication",
+    operatingSystem: "Web",
+    offers: {
       "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
+      price: "0",
+      priceCurrency: "USD",
     },
-    "aggregateRating": {
+    aggregateRating: {
       "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "100",
+      ratingValue: "4.8",
+      ratingCount: "100",
     },
-    "author": {
+    author: {
       "@type": "Organization",
-      "name": "SynauLearn",
+      name: "SynauLearn",
     },
   };
 
@@ -186,8 +179,10 @@ export default function RootLayout({
       <head>
         <JsonLd />
       </head>
-      <body className={`${inter.variable} ${sourceCodePro.variable} font-sans antialiased`}>
-        <ClientProviders>{children}</ClientProviders>
+      <body>
+        <ReactLenis root>
+          <ClientProviders>{children}</ClientProviders>
+        </ReactLenis>
       </body>
     </html>
   );
