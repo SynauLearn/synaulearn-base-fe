@@ -1,30 +1,32 @@
 import type { NextConfig } from "next";
 
 // Bundle analyzer for debugging bundle size
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
 });
 
 const nextConfig: NextConfig = {
   // Optimize images
   images: {
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
   // Enable compiler optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'],
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? {
+            exclude: ["error", "warn"],
+          }
+        : false,
   },
-
 
   // Optimize bundle
   modularizeImports: {
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    "lucide-react": {
+      transform: "lucide-react/dist/esm/icons/{{kebabCase member}}",
     },
   },
 
@@ -36,7 +38,8 @@ const nextConfig: NextConfig = {
     if (isServer) {
       config.resolve.alias = {
         ...config.resolve.alias,
-        '@walletconnect/keyvaluestorage': require.resolve('./lib/mocks/walletconnect-storage.js'),
+        "@walletconnect/keyvaluestorage":
+          require.resolve("./lib/mocks/walletconnect-storage.js"),
       };
     }
 
@@ -50,12 +53,32 @@ const nextConfig: NextConfig = {
       };
     }
 
+    config.module.rules.push({
+      test: /\.svg$/,
+      oneOf: [
+        {
+          include: /assets\/(icons|vector)/,
+          use: ["@svgr/webpack"],
+        },
+
+        {
+          type: "asset/resource",
+          include: /assets\/(images|mascot)/,
+        },
+      ],
+    });
+
     return config;
   },
 
   // Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@coinbase/onchainkit', 'wagmi', 'viem'],
+    optimizePackageImports: [
+      "lucide-react",
+      "@coinbase/onchainkit",
+      "wagmi",
+      "viem",
+    ],
   },
 
   // Required for Next.js 16 when webpack config exists
@@ -66,7 +89,7 @@ const nextConfig: NextConfig = {
     // Fix WalletConnect localStorage SSR error
     // @walletconnect/keyvaluestorage accesses localStorage in constructor
     resolveAlias: {
-      '@walletconnect/keyvaluestorage': './lib/mocks/walletconnect-storage.js',
+      "@walletconnect/keyvaluestorage": "./lib/mocks/walletconnect-storage.js",
     },
   },
 };
@@ -81,4 +104,3 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 export default withBundleAnalyzer(withPWA(nextConfig));
-

@@ -1,4 +1,4 @@
-/* @plugin 'tailwindcss-animate'; */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
 /* Base App / Mini App touch event fixes */
@@ -21,8 +21,8 @@ a,
 
 @theme inline {
   /* Font families - use next/font CSS variables */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-source-code-pro), ui-monospace, monospace;
+  --font-sans: "Bricolage Grotesque", sans-serif;
+  --font-inter: "Inter", sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -59,6 +59,66 @@ a,
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-sapphire-100: var(--sapphire-100);
+  --color-sapphire-200: var(--sapphire-200);
+  --color-sapphire-300: var(--sapphire-300);
+  --color-sapphire-400: var(--sapphire-400);
+  --color-sapphire-500: var(--sapphire-500);
+  --color-sapphire-600: var(--sapphire-600);
+  --color-sapphire-700: var(--sapphire-700);
+  --color-sapphire-800: var(--sapphire-800);
+  --color-sapphire-900: var(--sapphire-900);
+  --color-sapphire-1000: var(--sapphire-1000);
+  --color-sapphire-1100: var(--sapphire-1100);
+
+  --color-graphite-100: var(--graphite-100);
+  --color-graphite-200: var(--graphite-200);
+  --color-graphite-300: var(--graphite-300);
+  --color-graphite-400: var(--graphite-400);
+  --color-graphite-500: var(--graphite-500);
+  --color-graphite-600: var(--graphite-600);
+  --color-graphite-700: var(--graphite-700);
+  --color-graphite-800: var(--graphite-800);
+  --color-graphite-900: var(--graphite-900);
+  --color-graphite-1000: var(--graphite-1000);
+  --color-graphite-1100: var(--graphite-1100);
+
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-300: var(--gold-300);
+  --color-gold-400: var(--gold-400);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+  --color-gold-800: var(--gold-800);
+  --color-gold-900: var(--gold-900);
+  --color-gold-1000: var(--gold-1000);
+  --color-gold-1100: var(--gold-1100);
+
+  --color-spruce-100: var(--spruce-100);
+  --color-spruce-200: var(--spruce-200);
+  --color-spruce-300: var(--spruce-300);
+  --color-spruce-400: var(--spruce-400);
+  --color-spruce-500: var(--spruce-500);
+  --color-spruce-600: var(--spruce-600);
+  --color-spruce-700: var(--spruce-700);
+  --color-spruce-800: var(--spruce-800);
+  --color-spruce-900: var(--spruce-900);
+  --color-spruce-1000: var(--spruce-1000);
+  --color-spruce-1100: var(--spruce-1100);
+
+  --color-ruby-100: var(--ruby-100);
+  --color-ruby-200: var(--ruby-200);
+  --color-ruby-300: var(--ruby-300);
+  --color-ruby-400: var(--ruby-400);
+  --color-ruby-500: var(--ruby-500);
+  --color-ruby-600: var(--ruby-600);
+  --color-ruby-700: var(--ruby-700);
+  --color-ruby-800: var(--ruby-800);
+  --color-ruby-900: var(--ruby-900);
+  --color-ruby-1000: var(--ruby-1000);
+  --color-ruby-1100: var(--ruby-1100);
 }
 
 :root {
@@ -94,9 +154,69 @@ a,
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
+  --sapphire-100: #DCE1FC;
+  --sapphire-200: #B8C3F9;
+  --sapphire-300: #93A5F6;
+  --sapphire-400: #6F86F3;
+  --sapphire-500: #4B68F0;
+  --sapphire-600: #1339E9;
+  --sapphire-700: #0F2BAF;
+  --sapphire-800: #0C2492;
+  --sapphire-900: #0A1D75;
+  --sapphire-1000: #071558;
+  --sapphire-1100: #050E3B;
+
+  --graphite-100: #EBEBEB;
+  --graphite-200: #C2C2C2;
+  --graphite-300: #999999;
+  --graphite-400: #7A7A7A;
+  --graphite-500: #474747;
+  --graphite-600: #3D3D3D;
+  --graphite-700: #2D2D2D;
+  --graphite-800: #292929;
+  --graphite-900: #1F1F1F;
+  --graphite-1000: #141414;
+  --graphite-1100: #0A0A0A;
+
+  --gold-100: #FDF8E1;
+  --gold-200: #FAF0C3;
+  --gold-300: #F8E9A5;
+  --gold-400: #F5E187;
+  --gold-500: #F3DA6A;
+  --gold-600: #F0D24C;
+  --gold-700: #EDC61B;
+  --gold-800: #C3A210;
+  --gold-900: #927A0C;
+  --gold-1000: #615108;
+  --gold-1100: #312904;
+
+  --spruce-100: #D5E9D7;
+  --spruce-200: #ABD4AF;
+  --spruce-300: #81BE87;
+  --spruce-400: #57A85F;
+  --spruce-500: #417E47;
+  --spruce-600: #2C5530;
+  --spruce-700: #244628;
+  --spruce-800: #1D3820;
+  --spruce-900: #162A18;
+  --spruce-1000: #0E1C10;
+  --spruce-1100: #070E08;
+
+  --ruby-100: #FFC8D5;
+  --ruby-200: #FF91AA;
+  --ruby-300: #FF5980;
+  --ruby-400: #FF2256;
+  --ruby-500: #EA0037;
+  --ruby-600: #B3002A;
+  --ruby-700: #950023;
+  --ruby-800: #77001C;
+  --ruby-900: #590015;
+  --ruby-1000: #3C000E;
+  --ruby-1100: #1E0007;
 }
 
-.dark {
+/* .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -128,7 +248,7 @@ a,
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
+} */
 
 @layer base {
   * {
@@ -137,5 +257,10 @@ a,
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
