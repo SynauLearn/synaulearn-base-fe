@@ -14,7 +14,8 @@
     "home": "Home",
     "courses": "Courses",
     "profile": "Profile",
-    "leaderboard": "Leaderboard"
+    "leaderboard": "Leaderboard",
+    "mintBadge": "Badge"
   },
   "drawer": {
     "viewProfile": "View Profile",
