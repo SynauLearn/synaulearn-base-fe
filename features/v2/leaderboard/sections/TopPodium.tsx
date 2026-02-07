@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Calendar, Target } from "lucide-react";
 
 // Import SVG assets
-import LightningIcon from "@/assets/icons/lightning-icon.svg";
+import LightningIcon from "@/assets/icons/lightning.svg";
 import PodiumBackground from "@/assets/images/leaderboard/podium-background.svg";
 import DecorativeVector from "@/assets/images/leaderboard/decorative-vector.svg";
 import CloudLeft from "@/assets/images/leaderboard/cloud-left.svg";
@@ -95,9 +95,9 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
                     <Image
                         src={LightningIcon}
                         alt="XP"
-                        width={10}
-                        height={16}
-                        className="w-2.5 h-4"
+                        width={8}
+                        height={14}
+                        className="w-2 h-3.5"
                     />
                 </div>
 
@@ -110,17 +110,15 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
     };
 
     return (
-        <div className="relative w-full overflow-hidden" style={{ height: '400px' }}>
-            {/* Background shape from Figma - offset to show space above for buttons */}
-            <div className="absolute top-[57px] left-0 right-0 h-[343px]">
-                <Image
-                    src={PodiumBackground}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    priority
-                />
-            </div>
+        <div className="relative w-full overflow-hidden" style={{ height: '380px' }}>
+            {/* Background shape from Figma */}
+            <Image
+                src={PodiumBackground}
+                alt="Podium Background"
+                fill
+                className="object-cover"
+                priority
+            />
 
             {/* Decorative vector (10% opacity) */}
             <div className="absolute -left-16 -top-10 w-[500px] h-[545px] opacity-10">
@@ -174,16 +172,16 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
                 </span>
             </div>
 
-            {/* Podium Container - positioned lower to not block header/clouds */}
+            {/* Podium Container - positioned at bottom */}
             <div className="absolute bottom-[45px] left-0 right-0 flex justify-center items-end gap-5 px-4">
                 {/* 2nd Place - Left */}
-                <PodiumCard user={second} rank={2} height="200px" />
+                <PodiumCard user={second} rank={2} height="223px" />
 
                 {/* 1st Place - Center (tallest) */}
-                <PodiumCard user={first} rank={1} height="248px" />
+                <PodiumCard user={first} rank={1} height="271px" />
 
                 {/* 3rd Place - Right */}
-                <PodiumCard user={third} rank={3} height="168px" />
+                <PodiumCard user={third} rank={3} height="191px" />
             </div>
 
             {/* Boca Mascot - positioned at bottom center, overlapping podiums */}
