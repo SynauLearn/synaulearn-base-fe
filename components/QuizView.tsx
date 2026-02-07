@@ -12,6 +12,7 @@ interface QuizViewProps {
   onBack: () => void;
   onBackToFlashcard: () => void;
   onComplete: (isCorrect: boolean) => void;
+  embedded?: boolean;
 }
 
 export default function QuizView({
@@ -19,7 +20,8 @@ export default function QuizView({
   cardIndex,
   onBack,
   onBackToFlashcard,
-  onComplete
+  onComplete,
+  embedded = false,
 }: QuizViewProps) {
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
   const [touchEnd, setTouchEnd] = useState({ x: 0, y: 0 });
@@ -134,7 +136,10 @@ export default function QuizView({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 bg-[#1a1d2e] z-50 flex flex-col"
+      className={embedded
+        ? "w-full h-full flex flex-col bg-[#1a1d2e]"
+        : "fixed inset-0 bg-[#1a1d2e] z-50 flex flex-col"
+      }
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
