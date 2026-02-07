@@ -15,12 +15,44 @@ interface GreetingsSectionProps {
     progress: number;
   } | null;
   loading?: boolean;
+  pfpUrl?: string | null;
+  onContinueLearning?: () => void;
+  onProfileClick?: () => void;
 }
 
-const GreetingsSection = ({ isNewUser = true, username, lastActiveCourse, loading = false }: GreetingsSectionProps) => {
+const GreetingsSection = ({
+  isNewUser = true,
+  username,
+  lastActiveCourse,
+  loading = false,
+  pfpUrl,
+  onContinueLearning,
+  onProfileClick
+}: GreetingsSectionProps) => {
   if (loading) {
     return (
-      <section className="relative w-full h-[245px] bg-zinc-100 rounded-[32px] animate-pulse" />
+      <section className="relative flex gap-2.5">
+        <div className="relative w-full h-[245px] bg-[#DCE1FC] rounded-[32px] overflow-hidden">
+          {/* Shimmer overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+
+          {/* Skeleton content */}
+          <div className="absolute top-5 left-6 flex flex-col gap-2">
+            <div className="h-7 w-32 bg-white/40 rounded-lg" />
+            <div className="h-4 w-48 bg-white/30 rounded" />
+            <div className="h-3 w-40 bg-white/20 rounded" />
+          </div>
+
+          {/* Skeleton card */}
+          <div className="absolute left-6 w-[180px] bottom-6 h-24 bg-white/50 rounded-[20px]" />
+        </div>
+
+        {/* Skeleton icons */}
+        <div className="absolute right-2 top-0 flex gap-2.5">
+          <div className="w-11 h-11 rounded-full bg-[#6B7CFF]/30" />
+          <div className="w-11 h-11 rounded-full bg-[#DCE1FC]" />
+        </div>
+      </section>
     );
   }
 
@@ -53,7 +85,7 @@ const GreetingsSection = ({ isNewUser = true, username, lastActiveCourse, loadin
         <div className="absolute left-6 w-[200px] bottom-6 flex flex-col items-start py-3 px-4 gap-3 rounded-[20px] bg-white shadow-sm">
           {!isNewUser && lastActiveCourse ? (
             // Returning User: Course Progress
-            <Link href={`/courses/${lastActiveCourse.id}`} className="w-full">
+            <button onClick={onContinueLearning} className="w-full text-left">
               <div className="flex flex-col gap-2 w-full">
                 <div className="flex justify-between items-center">
                   <span className="px-2 py-1 bg-blue-600 text-[10px] font-bold text-white rounded-full">
@@ -75,7 +107,7 @@ const GreetingsSection = ({ isNewUser = true, username, lastActiveCourse, loadin
                   </span>
                 </div>
               </div>
-            </Link>
+            </button>
           ) : (
             // New User: Welcome CTA
             <>
@@ -105,8 +137,19 @@ const GreetingsSection = ({ isNewUser = true, username, lastActiveCourse, loadin
         <button className="rounded-full bg-sapphire-400 p-2">
           <MailIcon className="size-7 text-white" />
         </button>
-        <button className="rounded-full bg-sapphire-100 p-2">
-          <User className="size-7 text-white" />
+        <button
+          onClick={onProfileClick}
+          className="rounded-full bg-sapphire-100 p-2 overflow-hidden"
+        >
+          {pfpUrl ? (
+            <img
+              src={pfpUrl}
+              alt="Profile"
+              className="size-7 rounded-full object-cover"
+            />
+          ) : (
+            <User className="size-7 text-white" />
+          )}
         </button>
       </div>
     </section>

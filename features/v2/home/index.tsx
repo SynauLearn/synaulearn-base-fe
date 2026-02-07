@@ -5,7 +5,11 @@ import { api } from "@/convex/_generated/api";
 import GreetingsSection from "./sections/GreetingsSection";
 import DashboardSection from "./sections/DashboardSection";
 
-const HomePage = () => {
+interface HomePageProps {
+  onNavigate?: (view: "home" | "courses" | "profile" | "leaderboard" | "balance" | "mintbadge") => void;
+}
+
+const HomePage = ({ onNavigate }: HomePageProps) => {
   const { user: authUser, isLoading: isAuthLoading } = useUnifiedAuth();
 
   // Resolve Convex User
@@ -30,6 +34,15 @@ const HomePage = () => {
   // Default / Empty values if not loaded or no user
   const isNewUser = homeStats?.isNewUser ?? true;
 
+  // Navigation handlers
+  const handleContinueLearning = () => {
+    onNavigate?.("courses");
+  };
+
+  const handleProfileClick = () => {
+    onNavigate?.("profile");
+  };
+
   return (
     <section className="relative w-full min-h-screen flex flex-col gap-5 py-5 px-2">
       <GreetingsSection
@@ -37,6 +50,9 @@ const HomePage = () => {
         username={homeStats?.username}
         lastActiveCourse={homeStats?.lastActiveCourse}
         loading={isLoading}
+        pfpUrl={authUser?.pfpUrl}
+        onContinueLearning={handleContinueLearning}
+        onProfileClick={handleProfileClick}
       />
       <DashboardSection
         stats={homeStats?.stats}
@@ -50,4 +66,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
 

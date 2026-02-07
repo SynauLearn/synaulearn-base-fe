@@ -32,9 +32,45 @@ const DashboardSection = ({
 
   if (loading) {
     return (
-      <section className="relative flex flex-col gap-9 bg-gold-100 py-6 px-4 w-full rounded-4xl min-h-dvh animate-pulse">
-        <div className="h-40 bg-white/20 rounded-3xl" />
-        <div className="h-40 bg-white/20 rounded-3xl" />
+      <section className="relative flex flex-col gap-9 bg-gold-100 py-6 pb-24 px-4 w-full rounded-4xl min-h-dvh overflow-hidden">
+        {/* Shimmer overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+
+        {/* Learning Performance Skeleton */}
+        <div className="flex flex-col w-full bg-graphite-700/20 rounded-3xl">
+          <div className="flex flex-col bg-sapphire-100/60 rounded-3xl gap-4 px-4 py-6">
+            <div className="flex flex-col gap-1">
+              <div className="h-5 w-48 bg-white/40 rounded" />
+              <div className="h-3 w-20 bg-white/30 rounded" />
+            </div>
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex-1 h-16 bg-white/50 rounded-2xl" />
+              <div className="flex-1 h-16 bg-white/50 rounded-2xl" />
+              <div className="flex-1 h-16 bg-white/50 rounded-2xl" />
+            </div>
+          </div>
+          <div className="h-8 bg-graphite-700/10 rounded-b-3xl" />
+        </div>
+
+        {/* Today's Quests Skeleton */}
+        <div className="w-full pb-2 bg-zinc-800/20 rounded-3xl">
+          <div className="px-4 py-6 bg-amber-200/60 rounded-3xl">
+            <div className="flex justify-between items-center mb-4">
+              <div className="h-5 w-28 bg-white/40 rounded" />
+              <div className="h-6 w-20 bg-zinc-800/20 rounded-full" />
+            </div>
+            <div className="h-32 bg-white/50 rounded-2xl" />
+          </div>
+        </div>
+
+        {/* Recommended Courses Skeleton */}
+        <div className="flex flex-col gap-4">
+          <div className="h-5 w-36 bg-white/40 rounded" />
+          <div className="flex gap-3 overflow-hidden">
+            <div className="shrink-0 w-72 h-40 bg-white/50 rounded-2xl" />
+            <div className="shrink-0 w-72 h-40 bg-white/50 rounded-2xl" />
+          </div>
+        </div>
       </section>
     );
   }
@@ -45,7 +81,7 @@ const DashboardSection = ({
 
   return (
     // Your Learning Performance
-    <section className="relative flex flex-col gap-9 bg-gold-100 py-6 px-4 w-full rounded-4xl min-h-dvh overflow-clip">
+    <section className="relative flex flex-col gap-9 bg-gold-100 py-6 pb-24 px-4 w-full rounded-4xl min-h-dvh overflow-clip">
       <Image
         src={ImgDecorationDashboard}
         alt="Decoration Dashboard"

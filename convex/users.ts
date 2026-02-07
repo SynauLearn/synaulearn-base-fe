@@ -267,12 +267,52 @@ export const getHomeStats = query({
                 .slice(0, 2);
         }
 
-        // 5. Streak (Simple Mock/Logic)
-        // If they have activity today, streak is at least 1.
-        // If they have activity yesterday... (requires history).
-        // For MVP: Return 1 if active today, else 0. Or existing user behavior.
-        const hasActivityToday = todayProgress.length > 0;
-        const streak = hasActivityToday ? (user.total_xp > 500 ? 5 : 1) : 0;
+        // 5. Streak Calculation (Consecutive Days of Activity)
+        // A streak counts consecutive days where the user completed at least one card
+        let streak = 0;
+
+        if (cardProgress.length > 0) {
+            // Get all unique activity dates (in UTC, day precision)
+            const activityDates = new Set<string>();
+            for (const p of cardProgress) {
+                if (p.completed_at) {
+                    const date = new Date(p.completed_at);
+                    // Format as YYYY-MM-DD for unique day comparison
+                    activityDates.add(date.toISOString().split('T')[0]);
+                }
+            }
+
+            // Convert to sorted array (descending - most recent first)
+            const sortedDates = Array.from(activityDates).sort().reverse();
+
+            if (sortedDates.length > 0) {
+                const today = new Date().toISOString().split('T')[0];
+                const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+                // Check if most recent activity is today or yesterday (streak still active)
+                const mostRecentDate = sortedDates[0];
+
+                if (mostRecentDate === today || mostRecentDate === yesterday) {
+                    // Count consecutive days backwards
+                    streak = 1;
+                    let checkDate = new Date(mostRecentDate);
+
+                    for (let i = 1; i < sortedDates.length; i++) {
+                        // Expected previous day
+                        checkDate.setDate(checkDate.getDate() - 1);
+                        const expectedDate = checkDate.toISOString().split('T')[0];
+
+                        if (sortedDates[i] === expectedDate) {
+                            streak++;
+                        } else {
+                            break; // Streak broken
+                        }
+                    }
+                }
+                // If most recent activity is older than yesterday, streak is 0
+            }
+        }
+
 
         return {
             isNewUser,
