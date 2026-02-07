@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 // Import SVG assets
-import LightningIcon from "@/assets/icons/lightning-icon.svg";
+import LightningIcon from "@/assets/icons/lightning-icon.png";
 import RankPolygonGreen from "@/assets/images/leaderboard/rank-polygon-green.svg";
 import RankPolygonPink from "@/assets/images/leaderboard/rank-polygon-pink.svg";
 

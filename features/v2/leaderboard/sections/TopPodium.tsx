@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Calendar, Target } from "lucide-react";
 
 // Import SVG assets
-import LightningIcon from "@/assets/icons/lightning.svg";
+import LightningIcon from "@/assets/icons/lightning-icon.png";
 import PodiumBackground from "@/assets/images/leaderboard/podium-background.svg";
 import DecorativeVector from "@/assets/images/leaderboard/decorative-vector.svg";
 import CloudLeft from "@/assets/images/leaderboard/cloud-left.svg";
@@ -110,7 +110,7 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
     };
 
     return (
-        <div className="relative w-full overflow-hidden" style={{ height: '380px' }}>
+        <div className="relative w-full overflow-hidden" style={{ height: '390px' }}>
             {/* Background shape from Figma */}
             <Image
                 src={PodiumBackground}
@@ -124,7 +124,7 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
             <div className="absolute -left-16 -top-10 w-[500px] h-[545px] opacity-10">
                 <Image
                     src={DecorativeVector}
-                    alt=""
+                    alt="Decorative Vector"
                     fill
                     className="object-cover"
                 />
@@ -134,7 +134,7 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
             <div className="absolute top-[97px] -left-2 w-[94px] h-[55px]">
                 <Image
                     src={CloudLeft}
-                    alt=""
+                    alt="Cloud Left"
                     width={94}
                     height={55}
                 />
@@ -144,7 +144,7 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
             <div className="absolute top-[119px] -right-2 w-[94px] h-[55px]">
                 <Image
                     src={CloudRight}
-                    alt=""
+                    alt="Cloud Right"
                     width={94}
                     height={55}
                 />

@@ -51,15 +51,19 @@ const LeaderboardPage = ({ onBack }: LeaderboardPageProps) => {
         }
 
         if (!leaderboardData) return [];
-        return leaderboardData.map((user, index) => ({
-            id: user._id,
-            username: user.username || null,
-            displayName: user.display_name || null,
-            pfpUrl: null, // TODO: Add pfpUrl to user schema if needed
-            totalXP: user.total_xp,
-            rank: index + 1,
-            isCurrentUser: authUser?.walletAddress?.toLowerCase() === user.wallet_address?.toLowerCase(),
-        }));
+        return leaderboardData.map((user, index) => {
+            const isCurrentUser = authUser?.walletAddress?.toLowerCase() === user.wallet_address?.toLowerCase();
+            return {
+                id: user._id,
+                username: user.username || null,
+                displayName: user.display_name || null,
+                // Use authUser pfpUrl for current user, null for others (schema doesn't have pfp_url yet)
+                pfpUrl: isCurrentUser ? (authUser?.pfpUrl || null) : null,
+                totalXP: user.total_xp,
+                rank: index + 1,
+                isCurrentUser,
+            };
+        });
     }, [leaderboardData, authUser, useMockData]);
 
     // Split into top 3 and rest
@@ -112,7 +116,7 @@ const LeaderboardPage = ({ onBack }: LeaderboardPageProps) => {
     }
 
     return (
-        <section className="relative w-full min-h-screen flex flex-col bg-white rounded-3xl overflow-y-auto pb-32">
+        <section className="relative w-full min-h-screen flex flex-col bg-white rounded-3xl overflow-y-auto pb-32 gap-5 py-5 px-2">
             {/* Top section with podium - matches Figma .subtractParent */}
             <TopPodium topThree={topThree} />
 
