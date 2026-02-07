@@ -28,7 +28,7 @@ const Profile = dynamic(() => import("@/components/Profile"), {
     </div>
   ),
 });
-const MintBadge = dynamic(() => import("@/components/MintBadge"), {
+const MintBadgePage = dynamic(() => import("@/features/v2/mintbadge"), {
   ssr: false,
   loading: () => (
     <div className="min-h-screen flex items-center justify-center">
@@ -167,7 +167,7 @@ export default function ClientApp({
         );
 
       case "mintbadge":
-        return <MintBadge onBack={handleBackToHome} />;
+        return <MintBadgePage onBack={handleBackToHome} />;
 
       case "balance":
         return <MyBalance onBack={handleBackToHome} />;

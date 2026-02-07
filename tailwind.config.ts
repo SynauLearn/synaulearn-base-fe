@@ -13,6 +13,13 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        lavender: "#dce1fc",
+        beige: "#fdf8e1",
+        khaki: "#f5e187",
+        darkslategray: "#2d2d2d",
+        darkgray: "#a7a7a7",
+      },
       animation: {
         shimmer: "shimmer 1.5s infinite",
       },
