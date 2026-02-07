@@ -1,6 +1,11 @@
-import { Heart, Turtle } from "lucide-react";
+import Image from "next/image";
 
-interface RankingUser {
+// Import SVG assets
+import LightningIcon from "@/assets/icons/lightning-icon.svg";
+import RankPolygonGreen from "@/assets/images/leaderboard/rank-polygon-green.svg";
+import RankPolygonPink from "@/assets/images/leaderboard/rank-polygon-pink.svg";
+
+interface LeaderboardUser {
     id: string;
     username: string | null;
     displayName: string | null;
@@ -11,84 +16,84 @@ interface RankingUser {
 }
 
 interface RankingListProps {
-    users: RankingUser[];
+    users: LeaderboardUser[];
 }
 
+// Format XP with commas
+const formatXP = (xp: number): string => {
+    return xp.toLocaleString();
+};
+
+// Get display name
+const getDisplayName = (user: LeaderboardUser): string => {
+    return user.displayName || user.username || `User ${user.id.slice(-4)}`;
+};
+
 const RankingList = ({ users }: RankingListProps) => {
-    const getDisplayName = (user: RankingUser) => {
-        return user.displayName || user.username || "Anonymous";
-    };
-
-    const formatXP = (xp: number) => {
-        return xp.toLocaleString();
-    };
-
-    // Alternate between heart and turtle icons
-    const getRankIcon = (rank: number) => {
-        return rank % 2 === 0 ? (
-            <Turtle className="w-4 h-4 text-emerald-500" />
-        ) : (
-            <Heart className="w-4 h-4 text-red-400 fill-red-400" />
-        );
-    };
-
     if (users.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
-                <span className="text-4xl mb-2">🏆</span>
-                <span className="text-sm">Be the first to climb the ranks!</span>
+            <div className="flex-1 flex items-center justify-center py-12">
+                <p className="text-zinc-400 text-sm">No more rankings to show</p>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col divide-y divide-zinc-100 px-4 py-2 overflow-y-auto max-h-[50vh]">
-            {users.map((user) => (
-                <div
-                    key={user.id}
-                    className={`flex items-center gap-3 py-3 ${user.isCurrentUser ? "bg-sapphire-50 -mx-4 px-4 rounded-xl" : ""
-                        }`}
-                >
-                    {/* Rank Icon */}
-                    <div className="flex items-center gap-1.5 w-12">
-                        {getRankIcon(user.rank)}
-                        <span className="text-sm font-medium text-zinc-600">
-                            #{user.rank}
-                        </span>
-                    </div>
+        <div className="flex flex-col w-full px-3 pt-2">
+            {users.map((user, index) => {
+                // Alternate between pink and green polygons
+                const isEvenRank = user.rank % 2 === 0;
+                const PolygonSrc = isEvenRank ? RankPolygonGreen : RankPolygonPink;
 
-                    {/* Avatar */}
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-zinc-200 to-zinc-300 shrink-0">
-                        {user.pfpUrl ? (
-                            <img
-                                src={user.pfpUrl}
-                                alt={getDisplayName(user)}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-sm font-bold text-zinc-500">
-                                {getDisplayName(user).charAt(0).toUpperCase()}
+                return (
+                    <div
+                        key={user.id}
+                        className={`
+                            flex items-center h-12 px-4 py-4 gap-2.5 rounded-2xl bg-white
+                            ${user.isCurrentUser ? 'ring-2 ring-sapphire-400' : ''}
+                        `}
+                    >
+                        {/* Left section: Rank + Username */}
+                        <div className="flex-1 flex items-center gap-3">
+                            {/* Rank badge with polygon */}
+                            <div className="flex items-center gap-1">
+                                <Image
+                                    src={PolygonSrc}
+                                    alt=""
+                                    width={18}
+                                    height={8}
+                                    className="flex-shrink-0"
+                                />
+                                <span className="w-9 text-xs font-bold text-zinc-800 leading-[135%]">
+                                    #{user.rank}
+                                </span>
                             </div>
-                        )}
-                    </div>
 
-                    {/* Username */}
-                    <span className={`flex-1 text-sm truncate ${user.isCurrentUser ? "font-bold text-zinc-800" : "text-zinc-700"
-                        }`}>
-                        {getDisplayName(user)}
-                        {user.isCurrentUser && <span className="text-zinc-500 ml-1">(You)</span>}
-                    </span>
+                            {/* Username */}
+                            <span className="flex-1 text-xs font-normal font-inter text-zinc-800 truncate leading-[135%]">
+                                {getDisplayName(user)}
+                                {user.isCurrentUser && (
+                                    <span className="text-sapphire-500 ml-1">(You)</span>
+                                )}
+                            </span>
+                        </div>
 
-                    {/* XP */}
-                    <div className="flex items-center gap-1">
-                        <span className={`text-sm font-bold ${user.isCurrentUser ? "text-blue-600" : "text-blue-500"
-                            }`}>
-                            {formatXP(user.totalXP)} XP
-                        </span>
-                        <span className="text-xs">⚡</span>
+                        {/* Right section: XP */}
+                        <div className="flex items-center justify-center gap-1 text-sapphire-500">
+                            <span className="text-xs font-extrabold leading-[135%]">
+                                {formatXP(user.totalXP)} XP
+                            </span>
+                            <Image
+                                src={LightningIcon}
+                                alt=""
+                                width={9}
+                                height={16}
+                                className="w-2.5 h-4"
+                            />
+                        </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };

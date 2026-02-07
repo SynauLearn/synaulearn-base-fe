@@ -1,67 +1,77 @@
-import { Heart } from "lucide-react";
+import Image from "next/image";
+
+// Import SVG assets
+import LightningIcon from "@/assets/icons/lightning-icon.svg";
+import RankPolygonPink from "@/assets/images/leaderboard/rank-polygon-pink.svg";
+
+interface LeaderboardUser {
+    id: string;
+    username: string | null;
+    displayName: string | null;
+    pfpUrl?: string | null;
+    totalXP: number;
+    rank: number;
+    isCurrentUser?: boolean;
+}
 
 interface CurrentUserBannerProps {
-    user: {
-        id: string;
-        username: string | null;
-        displayName: string | null;
-        pfpUrl?: string | null;
-        totalXP: number;
-    };
+    user: LeaderboardUser;
     rank: number;
 }
 
+// Format XP with commas
+const formatXP = (xp: number): string => {
+    return xp.toLocaleString();
+};
+
+// Get display name
+const getDisplayName = (user: LeaderboardUser): string => {
+    return user.displayName || user.username || `User ${user.id.slice(-4)}`;
+};
+
 const CurrentUserBanner = ({ user, rank }: CurrentUserBannerProps) => {
-    const getDisplayName = () => {
-        return user.displayName || user.username || "You";
-    };
-
-    const formatXP = (xp: number) => {
-        return xp.toLocaleString();
-    };
-
-    const formatRank = (rank: number) => {
-        if (rank > 100) return "#100+";
-        return `#${rank}`;
-    };
+    const displayRank = rank > 100 ? '#100+' : `#${rank}`;
 
     return (
-        <div className="fixed bottom-20 left-2 right-2 z-20">
-            <div className="bg-zinc-800 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-lg">
-                {/* Rank Icon */}
-                <div className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4 text-red-400 fill-red-400" />
-                    <span className="text-sm font-bold text-white">
-                        {formatRank(rank)}
+        <div className="fixed bottom-24 left-0 right-0 px-3 z-50">
+            <div
+                className="flex items-center justify-center h-14 px-4 py-4 gap-2.5 rounded-2xl"
+                style={{ backgroundColor: '#2D2D2D' }}
+            >
+                {/* Left section: Rank + Username */}
+                <div className="flex-1 flex items-center gap-3">
+                    {/* Rank badge */}
+                    <div className="flex items-center gap-1">
+                        <Image
+                            src={RankPolygonPink}
+                            alt=""
+                            width={18}
+                            height={8}
+                            className="flex-shrink-0"
+                        />
+                        <span className="w-12 text-xs font-bold text-white leading-[135%]">
+                            {displayRank}
+                        </span>
+                    </div>
+
+                    {/* Username with (You) */}
+                    <span className="flex-1 text-xs font-semibold font-inter text-white truncate leading-[135%]">
+                        {getDisplayName(user)} (You)
                     </span>
                 </div>
 
-                {/* Avatar */}
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 shrink-0">
-                    {user.pfpUrl ? (
-                        <img
-                            src={user.pfpUrl}
-                            alt={getDisplayName()}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white">
-                            {getDisplayName().charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                </div>
-
-                {/* Username */}
-                <span className="flex-1 text-sm font-medium text-white truncate">
-                    {getDisplayName()} <span className="text-zinc-400">(You)</span>
-                </span>
-
-                {/* XP */}
-                <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold text-amber-400">
+                {/* Right section: XP */}
+                <div className="flex items-center justify-center gap-1 text-white">
+                    <span className="text-xs font-extrabold leading-[135%]">
                         {formatXP(user.totalXP)} XP
                     </span>
-                    <span className="text-xs">⚡</span>
+                    <Image
+                        src={LightningIcon}
+                        alt=""
+                        width={9}
+                        height={16}
+                        className="w-2.5 h-4 brightness-0 invert"
+                    />
                 </div>
             </div>
         </div>

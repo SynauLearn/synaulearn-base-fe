@@ -1,117 +1,197 @@
 import Image from "next/image";
-import BocaMascot from "@/assets/images/img-decoration-cat-leaderboard.svg"; // Placeholder for Boca
+import { Calendar, Target } from "lucide-react";
 
-interface TopPodiumUser {
+// Import SVG assets
+import LightningIcon from "@/assets/icons/lightning-icon.svg";
+import PodiumBackground from "@/assets/images/leaderboard/podium-background.svg";
+import DecorativeVector from "@/assets/images/leaderboard/decorative-vector.svg";
+import CloudLeft from "@/assets/images/leaderboard/cloud-left.svg";
+import CloudRight from "@/assets/images/leaderboard/cloud-right.svg";
+import BocaMascot from "@/assets/images/leaderboard/boca-mascot.svg";
+
+interface LeaderboardUser {
     id: string;
     username: string | null;
     displayName: string | null;
     pfpUrl?: string | null;
     totalXP: number;
     rank: number;
+    isCurrentUser?: boolean;
 }
 
 interface TopPodiumProps {
-    topThree: TopPodiumUser[];
+    topThree: LeaderboardUser[];
 }
 
+// Format XP with commas
+const formatXP = (xp: number): string => {
+    return xp.toLocaleString();
+};
+
+// Get display name
+const getDisplayName = (user: LeaderboardUser): string => {
+    return user.displayName || user.username || `User ${user.id.slice(-4)}`;
+};
+
 const TopPodium = ({ topThree }: TopPodiumProps) => {
-    const getDisplayName = (user: TopPodiumUser) => {
-        return user.displayName || user.username || "Anonymous";
-    };
+    // Reorder: [2nd, 1st, 3rd] for visual layout
+    const [first, second, third] = [
+        topThree[0], // 1st place
+        topThree[1], // 2nd place
+        topThree[2], // 3rd place
+    ];
 
-    const formatXP = (xp: number) => {
-        if (xp >= 1000) {
-            return `${(xp / 1000).toFixed(1).replace(/\.0$/, '')}k`;
-        }
-        return xp.toLocaleString();
-    };
+    // Podium card component matching Figma design
+    const PodiumCard = ({
+        user,
+        rank,
+        height
+    }: {
+        user: LeaderboardUser | undefined;
+        rank: number;
+        height: string;
+    }) => {
+        if (!user) return null;
 
-    // Reorder for podium display: [2nd, 1st, 3rd]
-    const podiumOrder = [topThree[1], topThree[0], topThree[2]].filter(Boolean);
+        return (
+            <div
+                className="flex flex-col items-center p-1 gap-1 rounded-t-[51px]"
+                style={{
+                    width: rank === 1 ? '91px' : '90px',
+                    height: height,
+                    background: 'linear-gradient(180deg, #FFFFFF 36.54%, #DCE1FC 100%)',
+                }}
+            >
+                {/* Avatar */}
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-sapphire-200 flex-shrink-0">
+                    {user.pfpUrl ? (
+                        <img
+                            src={user.pfpUrl}
+                            alt={getDisplayName(user)}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">
+                            👤
+                        </div>
+                    )}
+                </div>
 
-    const getRankBadgeColor = (rank: number) => {
-        switch (rank) {
-            case 1: return "bg-blue-600";
-            case 2: return "bg-emerald-500";
-            case 3: return "bg-amber-500";
-            default: return "bg-zinc-400";
-        }
-    };
+                {/* Username */}
+                <div className="w-full text-center text-xs font-semibold font-inter text-zinc-800 truncate px-1">
+                    {getDisplayName(user)}
+                </div>
 
-    const getAvatarSize = (rank: number) => {
-        return rank === 1 ? "w-24 h-24" : "w-20 h-20";
-    };
+                {/* XP Badge */}
+                <div
+                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg"
+                    style={{
+                        background: 'linear-gradient(90deg, #6F86F3 0%, #0A1D75 100%)',
+                    }}
+                >
+                    <span className="text-[10px] font-semibold text-white whitespace-nowrap">
+                        {formatXP(user.totalXP)} XP
+                    </span>
+                    <Image
+                        src={LightningIcon}
+                        alt="XP"
+                        width={8}
+                        height={14}
+                        className="w-2 h-3.5"
+                    />
+                </div>
 
-    const getRankNumberSize = (rank: number) => {
-        return rank === 1 ? "text-3xl" : "text-2xl";
+                {/* Rank Number */}
+                <div className="text-[32px] font-semibold text-sapphire-500 leading-tight">
+                    {rank}
+                </div>
+            </div>
+        );
     };
 
     return (
-        <div className="relative flex justify-center items-end gap-2 px-4 pb-8 pt-4">
-            {/* Background decorations */}
-            <div className="absolute top-2 left-1/4 w-3 h-3 text-xl">✨</div>
-            <div className="absolute top-8 right-1/4 w-3 h-3 text-xl">✨</div>
-            <div className="absolute top-4 right-1/3 w-2 h-2 text-sm">✨</div>
+        <div className="relative w-full overflow-hidden" style={{ height: '343px' }}>
+            {/* Background shape from Figma */}
+            <Image
+                src={PodiumBackground}
+                alt=""
+                fill
+                className="absolute inset-0 object-cover"
+                priority
+            />
 
-            {podiumOrder.map((user, index) => {
-                if (!user) return null;
-                const isFirst = user.rank === 1;
+            {/* Decorative vector (10% opacity) */}
+            <div className="absolute -left-16 -top-10 w-[500px] h-[545px] opacity-10">
+                <Image
+                    src={DecorativeVector}
+                    alt=""
+                    fill
+                    className="object-cover"
+                />
+            </div>
 
-                return (
-                    <div
-                        key={user.id}
-                        className={`flex flex-col items-center gap-1 ${isFirst ? "-mb-4" : ""}`}
-                    >
-                        {/* Avatar */}
-                        <div className={`relative ${getAvatarSize(user.rank)} rounded-full overflow-hidden border-4 ${user.rank === 1 ? "border-blue-400" :
-                            user.rank === 2 ? "border-emerald-400" : "border-amber-400"
-                            } bg-gradient-to-br from-zinc-200 to-zinc-300`}>
-                            {user.pfpUrl ? (
-                                <img
-                                    src={user.pfpUrl}
-                                    alt={getDisplayName(user)}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-zinc-500">
-                                    {getDisplayName(user).charAt(0).toUpperCase()}
-                                </div>
-                            )}
-                        </div>
+            {/* Cloud decoration left */}
+            <div className="absolute top-[97px] -left-2 w-[94px] h-[55px]">
+                <Image
+                    src={CloudLeft}
+                    alt=""
+                    width={94}
+                    height={55}
+                />
+            </div>
 
-                        {/* Username */}
-                        <span className="text-xs font-medium text-zinc-700 max-w-[80px] truncate text-center">
-                            {getDisplayName(user).length > 12
-                                ? getDisplayName(user).slice(0, 10) + "..."
-                                : getDisplayName(user)}
-                        </span>
+            {/* Cloud decoration right */}
+            <div className="absolute top-[119px] -right-2 w-[94px] h-[55px]">
+                <Image
+                    src={CloudRight}
+                    alt=""
+                    width={94}
+                    height={55}
+                />
+            </div>
 
-                        {/* XP Badge */}
-                        <div className={`px-2 py-1 ${getRankBadgeColor(user.rank)} rounded-full flex items-center gap-1`}>
-                            <span className="text-[10px] font-bold text-white">
-                                {formatXP(user.totalXP)} XP
-                            </span>
-                            <span className="text-[10px]">⚡</span>
-                        </div>
+            {/* Action buttons top right - using Lucide React icons */}
+            <div className="absolute top-0 right-3 flex gap-2.5">
+                <button className="w-12 h-12 rounded-full bg-sapphire-400 flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-white" />
+                </button>
+                <button className="w-12 h-12 rounded-full bg-sapphire-400/50 flex items-center justify-center">
+                    <Target className="w-6 h-6 text-white" />
+                </button>
+            </div>
 
-                        {/* Rank Number */}
-                        <span className={`${getRankNumberSize(user.rank)} font-extrabold ${user.rank === 1 ? "text-blue-600" :
-                            user.rank === 2 ? "text-emerald-500" : "text-amber-500"
-                            }`}>
-                            {user.rank}
-                        </span>
-                    </div>
-                );
-            })}
+            {/* Header bubble */}
+            <div
+                className="absolute top-[14px] left-3 rounded-2xl bg-white flex flex-col items-start px-3 py-3"
+                style={{
+                    border: '8px solid rgba(111, 134, 243, 0.09)',
+                }}
+            >
+                <span className="text-xs font-bold text-zinc-800 leading-[135%]">
+                    Here&apos;s my favorite learners...
+                </span>
+            </div>
 
-            {/* Boca Mascot */}
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-4 z-10">
+            {/* Podium Container - positioned at bottom */}
+            <div className="absolute bottom-[45px] left-0 right-0 flex justify-center items-end gap-5 px-4">
+                {/* 2nd Place - Left */}
+                <PodiumCard user={second} rank={2} height="223px" />
+
+                {/* 1st Place - Center (tallest) */}
+                <PodiumCard user={first} rank={1} height="271px" />
+
+                {/* 3rd Place - Right */}
+                <PodiumCard user={third} rank={3} height="191px" />
+            </div>
+
+            {/* Boca Mascot - positioned at bottom center, overlapping podiums */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[183px] h-[106px] pointer-events-none">
                 <Image
                     src={BocaMascot}
-                    alt="Boca"
-                    width={80}
-                    height={80}
-                    className="w-20 h-20"
+                    alt="Boca Mascot"
+                    width={183}
+                    height={106}
+                    priority
                 />
             </div>
         </div>

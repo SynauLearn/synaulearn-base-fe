@@ -98,23 +98,23 @@ const DashboardSection = ({
             <h2 className="font-bold">Your Learning Performance</h2>
             <p className="font-inter text-[0.625rem]">at a glance...</p>
           </div>
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex items-stretch gap-2 w-full">
             {/* Cards Mastered */}
-            <div className="flex-1 flex px-4 py-2 bg-white rounded-2xl justify-center">
+            <div className="flex-1 flex px-4 py-3 bg-white rounded-2xl justify-center items-center min-h-[80px]">
               <div className="flex flex-col items-center justify-center text-graphite-700">
                 <h4 className="text-2xl font-bold">{stats?.cardsMastered || 0}</h4>
                 <p className="font-inter text-[0.625rem] text-center leading-tight">Cards Mastered</p>
               </div>
             </div>
             {/* Courses Done */}
-            <div className="flex-1 flex px-4 py-2 bg-white rounded-2xl justify-center">
+            <div className="flex-1 flex px-4 py-3 bg-white rounded-2xl justify-center items-center min-h-[80px]">
               <div className="flex flex-col items-center justify-center text-graphite-700">
                 <h4 className="text-2xl font-bold">{stats?.coursesDone || 0}</h4>
                 <p className="font-inter text-[0.625rem] text-center leading-tight">Courses Done</p>
               </div>
             </div>
             {/* Streak */}
-            <div className="flex-1 flex px-4 py-2 bg-white rounded-2xl justify-center">
+            <div className="flex-1 flex px-4 py-3 bg-white rounded-2xl justify-center items-center min-h-[80px]">
               <div className="flex flex-col items-center justify-center text-graphite-700">
                 <h4 className="text-2xl font-bold">{stats?.streak || 0}</h4>
                 <p className="font-inter text-[0.625rem] text-center leading-tight">Day Streak</p>
