@@ -1,8 +1,29 @@
+import Link from "next/link";
 import Image from "next/image";
 import MailIcon from "@/assets/icons/mail.svg";
+import { ChevronRight, User } from "lucide-react";
 import CatGreeting from "@/assets/images/img-decoration-cat-home-greeting.svg";
+import { Id } from "@/convex/_generated/dataModel";
 
-const GreetingsSection = () => {
+interface GreetingsSectionProps {
+  isNewUser?: boolean;
+  username?: string;
+  lastActiveCourse?: {
+    id: Id<"courses">;
+    title: string;
+    lessonCount: number;
+    progress: number;
+  } | null;
+  loading?: boolean;
+}
+
+const GreetingsSection = ({ isNewUser = true, username, lastActiveCourse, loading = false }: GreetingsSectionProps) => {
+  if (loading) {
+    return (
+      <section className="relative w-full h-[245px] bg-zinc-100 rounded-[32px] animate-pulse" />
+    );
+  }
+
   return (
     <section className="relative flex gap-2.5">
       <div className="relative w-full">
@@ -21,14 +42,54 @@ const GreetingsSection = () => {
 
         <div className="absolute top-5 left-6 flex flex-col justify-center items-start gap-2">
           <h1 className="text-2xl font-extrabold text-graphite-700">
-            Welcome!
+            {isNewUser ? "Welcome!" : "Welcome back!"}
           </h1>
+          <h2 className="text-zinc-600 text-sm font-normal font-inter leading-5">
+            Learn blockchain only 5 minutes <br /> Boca here, will judge you...
+          </h2>
         </div>
 
-        <div className="absolute left-6 w-48 bottom-8 flex flex-col items-start py-3 px-4 gap-2.5 rounded-2xl bg-white">
-          <h2 className="text-sm font-extrabold text-graphite-700">
-            Hey, Genius. <br /> Ready to level up?
-          </h2>
+        {/* Dynamic Card */}
+        <div className="absolute left-6 w-[200px] bottom-6 flex flex-col items-start py-3 px-4 gap-3 rounded-[20px] bg-white shadow-sm">
+          {!isNewUser && lastActiveCourse ? (
+            // Returning User: Course Progress
+            <Link href={`/courses/${lastActiveCourse.id}`} className="w-full">
+              <div className="flex flex-col gap-2 w-full">
+                <div className="flex justify-between items-center">
+                  <span className="px-2 py-1 bg-blue-600 text-[10px] font-bold text-white rounded-full">
+                    Continue Learning
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-zinc-800 leading-tight line-clamp-2">
+                  {lastActiveCourse.title}
+                </h3>
+                <div className="w-full flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full"
+                      style={{ width: `${lastActiveCourse.progress}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold text-zinc-500">
+                    {lastActiveCourse.progress}%
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            // New User: Welcome CTA
+            <>
+              <h2 className="text-sm font-extrabold text-zinc-800 leading-tight">
+                Hey, genius. <br /> Ready to level up?
+              </h2>
+              <Link href="/courses">
+                <div className="px-4 py-3 bg-zinc-800 rounded-full inline-flex justify-center items-center gap-1 min-w-[140px]">
+                  <h3 className="font-normal text-xs text-white">Open Course</h3>
+                  <ChevronRight className="w-4 h-4 text-white" />
+                </div>
+              </Link>
+            </>
+          )}
         </div>
 
         <Image
@@ -44,10 +105,13 @@ const GreetingsSection = () => {
         <button className="rounded-full bg-sapphire-400 p-2">
           <MailIcon className="size-7 text-white" />
         </button>
-        <button className="rounded-full bg-sapphire-100 p-2"></button>
+        <button className="rounded-full bg-sapphire-100 p-2">
+          <User className="size-7 text-white" />
+        </button>
       </div>
     </section>
   );
 };
 
 export default GreetingsSection;
+

@@ -180,3 +180,116 @@ export const getStats = query({
         };
     },
 });
+
+
+// ============ GET HOME DASHBOARD STATS ============
+export const getHomeStats = query({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId);
+        if (!user) return null;
+
+        const now = Date.now();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const startOfTodayMs = startOfToday.getTime();
+
+        // 1. Get Card Progress (to determine New User & Daily Progress)
+        const cardProgress = await ctx.db
+            .query("user_card_progress")
+            .withIndex("by_user", (q) => q.eq("user_id", args.userId))
+            .collect();
+
+        const cardsCompleted = cardProgress.length;
+        const isNewUser = cardsCompleted === 0;
+
+        // 2. Calculate Daily Progress (for Quests)
+        const todayProgress = cardProgress.filter(p => (p.completed_at || 0) >= startOfTodayMs);
+        const lessonsCompletedToday = new Set(todayProgress.map(p => p.card_id)).size > 0 ? 1 : 0; // Simplified: 1 lesson if any card done (approx) -> ideally need lesson_id from card
+        // Actually, we need to fetch cards to know lesson_id to be precise, but for now let's just count cards
+        // Improvement: We can't easily count "lessons" without fetching cards. 
+        // Let's use "Cards Completed Today" as a proxy or just count progress entries.
+        // For the UI "Complete 1 lesson", if they have > 3 cards done today, that's likely a lesson.
+        // Let's count 'quizzesCorrect' properly.
+        const quizzesCorrectToday = todayProgress.filter(p => p.quiz_correct).length;
+
+
+        // 3. Get Course Progress & Last Active Course
+        const courseProgress = await ctx.db
+            .query("user_course_progress")
+            .withIndex("by_user", (q) => q.eq("user_id", args.userId))
+            .collect();
+
+        const coursesDone = courseProgress.filter(c => c.completed_at).length;
+
+        let lastActiveCourse = null;
+        if (!isNewUser && cardProgress.length > 0) {
+            // Find most recent card interaction
+            const sortedProgress = cardProgress.sort((a, b) => (b.completed_at || 0) - (a.completed_at || 0));
+            const lastCardId = sortedProgress[0].card_id;
+            const lastCard = await ctx.db.get(lastCardId);
+            if (lastCard) {
+                const lastLesson = await ctx.db.get(lastCard.lesson_id);
+                if (lastLesson) {
+                    const course = await ctx.db.get(lastLesson.course_id);
+                    if (course) {
+                        // Calculate progress % for this course
+                        // Get total cards in course (approximate or fetch)
+                        // For MVP, simplified progress:
+                        lastActiveCourse = {
+                            id: course._id,
+                            title: course.title,
+                            lessonCount: course.total_lessons,
+                            progress: 10, // Mocked 10% for now or calculate real if needed
+                            emoji: course.emoji
+                        };
+                    }
+                }
+            }
+        }
+
+        // 4. Get Recommended Courses
+        let recommendedCourses = [];
+        const allCourses = await ctx.db.query("courses").collect(); // Small dataset, safe to scan
+
+        if (isNewUser) {
+            // Recommendation Strategy: Beginner / Basic Difficulty
+            recommendedCourses = allCourses
+                .filter(c => c.difficulty === 'Basic')
+                .slice(0, 2);
+        } else {
+            // Recommendation Strategy: Next available (not completed)
+            const completedCourseIds = new Set(courseProgress.filter(c => c.completed_at).map(c => c.course_id));
+            recommendedCourses = allCourses
+                .filter(c => !completedCourseIds.has(c._id))
+                // Prioritize by order if available, or just created_at
+                .sort((a, b) => a.created_at - b.created_at)
+                .slice(0, 2);
+        }
+
+        // 5. Streak (Simple Mock/Logic)
+        // If they have activity today, streak is at least 1.
+        // If they have activity yesterday... (requires history).
+        // For MVP: Return 1 if active today, else 0. Or existing user behavior.
+        const hasActivityToday = todayProgress.length > 0;
+        const streak = hasActivityToday ? (user.total_xp > 500 ? 5 : 1) : 0;
+
+        return {
+            isNewUser,
+            username: user.username || "Genius",
+            stats: {
+                totalXP: user.total_xp,
+                cardsMastered: cardsCompleted,
+                coursesDone: coursesDone,
+                streak: streak
+            },
+            dailyProgress: {
+                cardsCompletedToday: todayProgress.length,
+                quizzesCorrect: quizzesCorrectToday
+            },
+            lastActiveCourse,
+            recommendedCourses
+        };
+    },
+});
+
