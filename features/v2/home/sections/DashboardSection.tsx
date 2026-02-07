@@ -161,10 +161,10 @@ const DashboardSection = ({
 
       {/* Recommended for you */}
       <div className="w-full inline-flex flex-col justify-start items-start gap-4">
-        <h3 className="self-stretch text-zinc-800 text-base font-normal leading-5">Recommend For You</h3>
-        <div className="self-stretch flex flex-col gap-3 w-full">
+        <h3 className="self-stretch text-zinc-800 text-base font-normal leading-5 px-1">Recommend For You</h3>
+        <div className="w-full flex flex-row gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory scroll-smooth -mx-2 px-2">
           {recommendedCourses.map((course) => (
-            <Link key={course._id} href={`/courses/${course._id}`} className="w-full">
+            <Link key={course._id} href={`/courses/${course._id}`} className="shrink-0 w-72 snap-start">
               <div className="w-full px-3 py-3 bg-white rounded-2xl inline-flex flex-col justify-start items-start gap-2.5 shadow-sm">
                 <div className="w-full inline-flex justify-between items-center">
                   <div className="px-2 py-1 bg-indigo-500 rounded-lg flex justify-center items-center gap-2.5">
@@ -176,7 +176,7 @@ const DashboardSection = ({
                 </div>
                 <div className="inline-flex justify-start items-center gap-2.5 w-full">
                   {course.emoji ? (
-                    <div className="w-24 h-24 rounded-xl bg-orange-100 flex items-center justify-center text-4xl">
+                    <div className="w-24 h-24 rounded-xl bg-orange-100 flex items-center justify-center text-4xl shrink-0">
                       {course.emoji}
                     </div>
                   ) : (
@@ -185,7 +185,7 @@ const DashboardSection = ({
                       alt={course.title}
                       width={100}
                       height={100}
-                      className="w-24 h-24 rounded-xl object-cover"
+                      className="w-24 h-24 rounded-xl object-cover shrink-0"
                     />
                   )}
                   <div className="flex-1 inline-flex flex-col justify-start items-start gap-2 min-w-0">
@@ -197,7 +197,7 @@ const DashboardSection = ({
                       <div className="justify-center text-zinc-800 text-[10px] font-normal font-['Inter'] leading-3">{course.total_lessons} Lessons</div>
                       <div className="w-1 h-1 bg-zinc-300 rounded-full" />
                       <div className={`px-2 py-1 rounded-lg flex justify-center items-center gap-2.5 ${course.difficulty === 'Basic' ? 'bg-green-700' :
-                          course.difficulty === 'Pro' ? 'bg-red-700' : 'bg-yellow-600'
+                        course.difficulty === 'Pro' ? 'bg-red-700' : 'bg-yellow-600'
                         }`}>
                         <div className="justify-center text-white text-[10px] font-medium font-['Bricolage_Grotesque'] leading-3">
                           {course.difficulty}

@@ -1,5 +1,7 @@
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { useHomeStats, useUserByFid, useUserByWallet } from "@/lib/convexApi";
+import { useUserByFid, useUserByWallet } from "@/lib/convexApi";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import GreetingsSection from "./sections/GreetingsSection";
 import DashboardSection from "./sections/DashboardSection";
 
@@ -12,8 +14,15 @@ const HomePage = () => {
   const fidUser = useUserByFid(authUser?.fid);
   const convexUser = walletUser || fidUser;
 
-  // Fetch Home Stats
-  const homeStats = useHomeStats(convexUser?._id);
+  // Extract stable userId to prevent unnecessary re-renders
+  const userId = convexUser?._id;
+
+  // Fetch Home Stats - using useQuery directly for maximum reactivity
+  // Convex queries are reactive and will auto-update when underlying data changes
+  const homeStats = useQuery(
+    api.users.getHomeStats,
+    userId ? { userId } : "skip"
+  );
 
   // Loading State: Auth loading OR (User exists but stats not loaded yet)
   const isLoading = isAuthLoading || (!!authUser && homeStats === undefined);
@@ -41,3 +50,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
