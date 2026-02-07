@@ -139,13 +139,13 @@ const GreetingsSection = ({
         </button>
         <button
           onClick={onProfileClick}
-          className="rounded-full bg-sapphire-100 p-2 overflow-hidden"
+          className={`rounded-full overflow-hidden ${pfpUrl ? 'w-11 h-11' : 'bg-sapphire-100 p-2'}`}
         >
           {pfpUrl ? (
             <img
               src={pfpUrl}
               alt="Profile"
-              className="size-7 rounded-full object-cover"
+              className="w-full h-full object-cover"
             />
           ) : (
             <User className="size-7 text-white" />

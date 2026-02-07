@@ -1,5 +1,5 @@
 import Image from "next/image";
-import BocaMascot from "@/assets/images/img-decoration-cat-home-greeting.svg"; // Placeholder for Boca
+import BocaMascot from "@/assets/images/img-decoration-cat-leaderboard.svg"; // Placeholder for Boca
 
 interface TopPodiumUser {
     id: string;
@@ -64,7 +64,7 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
                     >
                         {/* Avatar */}
                         <div className={`relative ${getAvatarSize(user.rank)} rounded-full overflow-hidden border-4 ${user.rank === 1 ? "border-blue-400" :
-                                user.rank === 2 ? "border-emerald-400" : "border-amber-400"
+                            user.rank === 2 ? "border-emerald-400" : "border-amber-400"
                             } bg-gradient-to-br from-zinc-200 to-zinc-300`}>
                             {user.pfpUrl ? (
                                 <img
@@ -96,7 +96,7 @@ const TopPodium = ({ topThree }: TopPodiumProps) => {
 
                         {/* Rank Number */}
                         <span className={`${getRankNumberSize(user.rank)} font-extrabold ${user.rank === 1 ? "text-blue-600" :
-                                user.rank === 2 ? "text-emerald-500" : "text-amber-500"
+                            user.rank === 2 ? "text-emerald-500" : "text-amber-500"
                             }`}>
                             {user.rank}
                         </span>

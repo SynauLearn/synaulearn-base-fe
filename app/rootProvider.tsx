@@ -19,7 +19,12 @@ export const wagmiConfig = createConfig({
       preference: "smartWalletOnly",
       version: "4",
     }),
-    metaMask(),
+    metaMask({
+      dappMetadata: {
+        name: "SynauLearn",
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://synaulearn.space',
+      },
+    }),
     farcasterMiniApp(), // Required for Base App frame integration
   ],
   ssr: true,
