@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import { Search } from "lucide-react";
 
@@ -46,8 +45,8 @@ const MintHeader = ({ filter, onFilterChange, stats }: MintHeaderProps) => {
                             key={tab.id}
                             onClick={() => onFilterChange(tab.id)}
                             className={`flex-1 h-full rounded-[16px] font-semibold transition-all px-2 ${isActive
-                                    ? 'bg-[#F5E187] text-darkslategray shadow-[0px_2px_20px_rgba(0,_0,_0,_0.04)]'
-                                    : 'text-[#888]'
+                                ? 'bg-[#F5E187] text-darkslategray shadow-[0px_2px_20px_rgba(0,_0,_0,_0.04)]'
+                                : 'text-[#888]'
                                 }`}
                         >
                             {tab.label}

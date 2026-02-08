@@ -1,89 +1,57 @@
-import type { NextPage } from 'next';
-import { useState, useMemo } from 'react';
-import MintHeader, { FilterType } from './sections/MintHeader';
-import BadgeList, { BadgeItem } from './sections/BadgeList';
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-
-// MOCK DATA corresponding to Figma design
-const MOCK_BADGES: BadgeItem[] = [
-    {
-        id: '1',
-        title: 'Smart Contract Fundamentals',
-        status: 'minted',
-        // image: '/assets/badges/smart-contract-fundamentals.png' // TODO: Add asset
-    },
-    {
-        id: '2',
-        title: 'Blockchain Basics',
-        status: 'unlocked',
-        // image: '/assets/badges/blockchain-basics.png' // TODO: Add asset
-    },
-    {
-        id: '3',
-        title: 'DeFi and Smart Contracts',
-        status: 'locked',
-        // image: '/assets/badges/defi.png' // TODO: Add asset
-    },
-    {
-        id: '4',
-        title: 'Introduction to Base',
-        status: 'locked',
-        // image: '/assets/badges/intro-base.png' // TODO: Add asset
-    },
-    {
-        id: '5',
-        title: 'Wallet Security',
-        status: 'locked',
-    },
-    {
-        id: '6',
-        title: 'NFTs 101',
-        status: 'locked',
-    }
-];
+import Image from "next/image";
+import MintHeader from "./sections/MintHeader";
+import BadgeList from "./sections/BadgeList";
+import bgDecoration1 from "@/assets/images/mintbadge/img-decoration-background.png";
+import bgDecoration2 from "@/assets/images/mintbadge/img-decoration-background2.png";
+import { useMintBadge } from "./hooks/useMintBadge";
 
 interface MintBadgePageProps {
     onBack?: () => void;
 }
 
 const MintBadgePage = ({ onBack }: MintBadgePageProps) => {
-    const { user } = useUnifiedAuth();
-    const [filter, setFilter] = useState<FilterType>('all');
-
-    // Calculate stats from mock data
-    const stats = useMemo(() => {
-        return {
-            all: MOCK_BADGES.length,
-            unlocked: MOCK_BADGES.filter(b => b.status === 'unlocked').length,
-            minted: MOCK_BADGES.filter(b => b.status === 'minted').length,
-            locked: MOCK_BADGES.filter(b => b.status === 'locked').length,
-        };
-    }, []);
-
-    // Filter badges to display
-    const displayedBadges = useMemo(() => {
-        if (filter === 'all') return MOCK_BADGES;
-        return MOCK_BADGES.filter(b => b.status === filter);
-    }, [filter]);
-
-    const handleMintBadge = (id: string) => {
-        console.log(`Minting badge ${id}...`);
-        // TODO: Implement minting logic
-        // For static demo, maybe toggle status?
-    };
+    const {
+        displayedBadges,
+        stats,
+        filter,
+        setFilter,
+        handleMintBadge,
+        ToastComponent
+    } = useMintBadge();
 
     return (
-        <div className="relative w-full flex flex-col min-h-screen py-5 bg-[#DCE1FC]">
-            <MintHeader
-                filter={filter}
-                onFilterChange={setFilter}
-                stats={stats}
-            />
+        <div className="relative w-full flex flex-col min-h-screen py-5 bg-[#DCE1FC] overflow-hidden">
+            {ToastComponent}
+            {/* Background Decorations */}
+            <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                <Image
+                    src={bgDecoration1}
+                    alt=""
+                    fill
+                    className="object-cover mix-blend-overlay"
+                    priority
+                />
+                <Image
+                    src={bgDecoration2}
+                    alt=""
+                    fill
+                    className="object-cover mix-blend-overlay"
+                    priority
+                />
+            </div>
 
-            <BadgeList
-                badges={displayedBadges}
-                onMintBadge={handleMintBadge}
-            />
+            <div className="relative z-10 w-full flex flex-col items-center">
+                <MintHeader
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    stats={stats}
+                />
+
+                <BadgeList
+                    badges={displayedBadges}
+                    onMintBadge={handleMintBadge}
+                />
+            </div>
         </div>
     );
 };
