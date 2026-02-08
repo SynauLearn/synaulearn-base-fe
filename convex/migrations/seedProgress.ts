@@ -51,7 +51,9 @@ export const insertProgress = mutation({
         const cards = await ctx.db.query("cards").collect();
         const cardQuestionToId: Record<string, Id<"cards">> = {};
         for (const card of cards) {
-            cardQuestionToId[card.flashcard_question] = card._id;
+            if (card.flashcard_question) {
+                cardQuestionToId[card.flashcard_question] = card._id;
+            }
         }
 
         console.log(`📚 Found ${users.length} users, ${cards.length} cards`);

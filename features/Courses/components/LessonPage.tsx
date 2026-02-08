@@ -107,7 +107,7 @@ const LessonPage = ({
   const totalCards = cards.length;
   const isLastCard = currentCardIndex === totalCards - 1;
 
-
+  if (!currentCard) return null;
 
   const handleFlashcardContinue = () => {
     setXpEarned(xpEarned + 5);
@@ -232,9 +232,8 @@ const LessonPage = ({
                     <>
                       <p className="text-gray-200 text-sm">Answer :</p>
                       <div className="flex h-96 items-center">
-                        <p className={`leading-relaxed mb-6 ${currentCard.flashcard_answer.length > 200 ? 'text-sm text-white' : 'text-lg text-white'
-                          }`}>
-                          {currentCard.flashcard_answer}
+                        <p className={`leading-relaxed mb-6 ${(currentCard.flashcard_answer || "").length > 200 ? 'text-sm text-white' : 'text-lg text-white'}`}>
+                          {currentCard.flashcard_answer || ""}
                         </p>
                       </div>
                     </>

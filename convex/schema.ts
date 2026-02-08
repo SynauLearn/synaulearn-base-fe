@@ -11,9 +11,14 @@ export default defineSchema({
         total_xp: v.number(),
         created_at: v.number(),               // timestamp
         updated_at: v.number(),
+        // Admin fields
+        clerk_id: v.optional(v.string()),
+        email: v.optional(v.string()),
+        role: v.optional(v.string()),
     })
         .index("by_wallet", ["wallet_address"])  // Primary lookup
-        .index("by_fid", ["fid"]),               // Secondary lookup for Farcaster
+        .index("by_fid", ["fid"])               // Secondary lookup for Farcaster
+        .index("by_clerk_id", ["clerk_id"]),    // Admin lookup
 
     // ============ CATEGORIES ============
     categories: defineTable({
@@ -39,6 +44,9 @@ export default defineSchema({
         total_lessons: v.number(),
         course_number: v.optional(v.number()), // Unique numeric ID for smart contract
         created_at: v.number(),
+        course_detail: v.optional(v.string()), // Detailed description/markdown for the course
+        // Admin fields
+        slug: v.optional(v.string()),
     })
         .index("by_language", ["language"])
         .index("by_difficulty", ["difficulty"])
@@ -51,6 +59,10 @@ export default defineSchema({
         title: v.string(),
         lesson_number: v.number(),
         created_at: v.number(),
+        // Admin fields
+        slug: v.optional(v.string()),
+        description: v.optional(v.string()),
+        content: v.optional(v.string()),
     })
         .index("by_course", ["course_id"])
         .index("by_course_and_number", ["course_id", "lesson_number"]),
@@ -60,8 +72,8 @@ export default defineSchema({
         lesson_id: v.id("lessons"),
         card_number: v.number(),
         // Flashcard
-        flashcard_question: v.string(),
-        flashcard_answer: v.string(),
+        flashcard_question: v.optional(v.string()), // Made optional to support Admin generic cards
+        flashcard_answer: v.optional(v.string()),   // Made optional to support Admin generic cards
         // Quiz (DEPRECATED - kept for migration rollback, use quizzes table)
         quiz_question: v.optional(v.string()),
         quiz_option_a: v.optional(v.string()),
@@ -70,6 +82,11 @@ export default defineSchema({
         quiz_option_d: v.optional(v.string()),
         quiz_correct_answer: v.optional(v.string()), // 'A' | 'B' | 'C' | 'D'
         created_at: v.number(),
+        // Admin fields
+        type: v.optional(v.string()),
+        title: v.optional(v.string()),
+        content: v.optional(v.string()),
+        quiz_type: v.optional(v.string()),
     })
         .index("by_lesson", ["lesson_id"])
         .index("by_lesson_and_number", ["lesson_id", "card_number"]),

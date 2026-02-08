@@ -18,8 +18,8 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === "production"
         ? {
-            exclude: ["error", "warn"],
-          }
+          exclude: ["error", "warn"],
+        }
         : false,
   },
 
@@ -32,6 +32,13 @@ const nextConfig: NextConfig = {
 
   webpack: (config, { isServer }) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
+
+    // Fix MetaMask SDK React Native warnings
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@react-native-async-storage/async-storage": false,
+      "react-native": false,
+    };
 
     // Fix WalletConnect localStorage SSR error
     // @walletconnect/keyvaluestorage accesses localStorage in constructor

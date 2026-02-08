@@ -102,11 +102,65 @@ export const addWalletAddressToUsers = mutation({
             updated++;
         }
 
+
         return {
             totalUsers: users.length,
             updated,
             skipped,
             message: `Migration complete. ${updated} users updated, ${skipped} skipped.`
         };
+    },
+});
+
+export const backfillCourseDetail = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const courses = await ctx.db.query("courses").collect();
+        let count = 0;
+
+        for (const course of courses) {
+            // @ts-ignore
+            if (course.course_detail === undefined) {
+                // Default detail based on course title if possible, or generic
+                let detail = "";
+                if (course.title.includes("Base")) {
+                    detail = `
+# Tentang Kursus Ini
+
+Pelajari dasar-dasar Base, blockchain Layer-2 yang aman, murah, dan developer-friendly yang dibangun di atas Ethereum.
+
+## Apa yang akan Anda pelajari?
+- Konsep dasar Layer-2 dan mengapa itu penting
+- Cara menggunakan Base network
+- Ekosistem dan tools di Base
+- Tips keamanan dalam bertransaksi
+
+## Untuk siapa kursus ini?
+Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain modern dan developer yang ingin mulai membangun di Base.
+                    `.trim();
+                } else if (course.title.includes("DeFi")) {
+                    detail = `
+# DeFi di Base
+
+Jelajahi dunia Decentralized Finance (DeFi) di jaringan Base.
+
+## Materi Kursus
+- Pengenalan DEX (Decentralized Exchange)
+- Landing & Borrowing protocols
+- Yield Farming basics
+- Manajemen risiko di DeFi
+                    `.trim();
+                } else {
+                    detail = course.description || "Course detail coming soon.";
+                }
+
+                await ctx.db.patch(course._id, {
+                    course_detail: detail,
+                });
+                count++;
+            }
+        }
+
+        return { message: "Backfilled course_detail", count };
     },
 });

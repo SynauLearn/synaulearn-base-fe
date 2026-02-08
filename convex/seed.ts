@@ -23,6 +23,20 @@ export const seedBaseCourse = mutation({
             category_id: undefined,
             total_lessons: 3,
             created_at: now,
+            course_detail: `
+# Tentang Kursus Ini
+
+Pelajari dasar-dasar Base, blockchain Layer-2 yang aman, murah, dan developer-friendly yang dibangun di atas Ethereum.
+
+## Apa yang akan Anda pelajari?
+- Konsep dasar Layer-2 dan mengapa itu penting
+- Cara menggunakan Base network
+- Ekosistem dan tools di Base
+- Tips keamanan dalam bertransaksi
+
+## Untuk siapa kursus ini?
+Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain modern dan developer yang ingin mulai membangun di Base.
+            `.trim(),
         });
 
         // Create Lesson 1: Introduction
@@ -319,6 +333,20 @@ export const reseedAll = mutation({
             category_id: basicCategoryId,
             total_lessons: 3,
             created_at: now,
+            course_detail: `
+# Tentang Kursus Ini
+
+Pelajari dasar-dasar Base, blockchain Layer-2 yang aman, murah, dan developer-friendly yang dibangun di atas Ethereum.
+
+## Apa yang akan Anda pelajari?
+- Konsep dasar Layer-2 dan mengapa itu penting
+- Cara menggunakan Base network
+- Ekosistem dan tools di Base
+- Tips keamanan dalam bertransaksi
+
+## Untuk siapa kursus ini?
+Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain modern dan developer yang ingin mulai membangun di Base.
+            `.trim(),
         });
 
         // Create lessons

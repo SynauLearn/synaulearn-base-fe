@@ -116,18 +116,18 @@ export default function LessonList({
                                 onClick={() => !isLocked && onLessonSelect(lesson._id, lesson.title)}
                                 disabled={isLocked}
                                 className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all ${isCompleted
-                                        ? 'bg-green-900/30 border border-green-500/30'
-                                        : isLocked
-                                            ? 'bg-slate-900/50 opacity-60 cursor-not-allowed'
-                                            : 'bg-slate-800 hover:bg-slate-700 cursor-pointer'
+                                    ? 'bg-green-900/30 border border-green-500/30'
+                                    : isLocked
+                                        ? 'bg-slate-900/50 opacity-60 cursor-not-allowed'
+                                        : 'bg-slate-800 hover:bg-slate-700 cursor-pointer'
                                     }`}
                             >
                                 {/* Lesson Number */}
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${isCompleted
-                                        ? 'bg-green-500 text-white'
-                                        : isLocked
-                                            ? 'bg-slate-700 text-gray-500'
-                                            : 'bg-blue-600 text-white'
+                                    ? 'bg-green-500 text-white'
+                                    : isLocked
+                                        ? 'bg-slate-700 text-gray-500'
+                                        : 'bg-blue-600 text-white'
                                     }`}>
                                     {isCompleted ? (
                                         <CheckCircle className="w-5 h-5" />
