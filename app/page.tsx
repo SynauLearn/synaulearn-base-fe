@@ -4,10 +4,10 @@ import ClientApp from "./ClientApp";
 
 /**
  * Home Page - Server Component
- * 
+ *
  * This is a Server Component that preloads public data
  * before passing to the client for hydration.
- * 
+ *
  * Benefits:
  * - Faster initial load (content pre-rendered)
  * - Better SEO (HTML contains actual content)
