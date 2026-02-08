@@ -62,17 +62,44 @@ export default defineSchema({
         // Flashcard
         flashcard_question: v.string(),
         flashcard_answer: v.string(),
-        // Quiz
-        quiz_question: v.string(),
-        quiz_option_a: v.string(),
-        quiz_option_b: v.string(),
-        quiz_option_c: v.string(),
-        quiz_option_d: v.string(),
-        quiz_correct_answer: v.string(), // 'A' | 'B' | 'C' | 'D'
+        // Quiz (DEPRECATED - kept for migration rollback, use quizzes table)
+        quiz_question: v.optional(v.string()),
+        quiz_option_a: v.optional(v.string()),
+        quiz_option_b: v.optional(v.string()),
+        quiz_option_c: v.optional(v.string()),
+        quiz_option_d: v.optional(v.string()),
+        quiz_correct_answer: v.optional(v.string()), // 'A' | 'B' | 'C' | 'D'
         created_at: v.number(),
     })
         .index("by_lesson", ["lesson_id"])
         .index("by_lesson_and_number", ["lesson_id", "card_number"]),
+
+    // ============ QUIZZES ============
+    quizzes: defineTable({
+        card_id: v.id("cards"),
+        quiz_type: v.string(), // 'multiple_choice' | 'true_false' | 'fill_blank'
+        question: v.string(),
+
+        // Multiple Choice specific (optional - only used when quiz_type = 'multiple_choice')
+        options: v.optional(v.array(v.object({
+            id: v.string(),  // 'A', 'B', 'C', 'D'
+            text: v.string(),
+        }))),
+
+        // Universal answer field
+        // For multiple_choice: 'A' | 'B' | 'C' | 'D'
+        // For true_false: 'true' | 'false'
+        // For fill_blank: the exact answer text
+        correct_answer: v.string(),
+
+        // Fill-in-the-Blank specific (optional)
+        acceptable_answers: v.optional(v.array(v.string())), // Alternative correct answers
+        hint: v.optional(v.string()), // Optional hint for fill-blank
+
+        created_at: v.number(),
+    })
+        .index("by_card", ["card_id"])
+        .index("by_type", ["quiz_type"]),
 
     // ============ USER CARD PROGRESS ============
     user_card_progress: defineTable({

@@ -15,7 +15,7 @@ import HomePage from "@/features/v2/home";
 // Lazy load non-critical components
 const WelcomeModal = lazy(() => import("@/components/WelcomeModal"));
 const Drawer = lazy(() => import("@/components/Drawer"));
-const Leaderboard = lazy(() => import("@/components/Leaderboard"));
+const LeaderboardPage = lazy(() => import("@/features/v2/leaderboard"));
 const CoursesPage = lazy(() => import("@/features/Courses"));
 
 // Dynamic import with SSR disabled for wallet-heavy components
@@ -28,7 +28,7 @@ const Profile = dynamic(() => import("@/components/Profile"), {
     </div>
   ),
 });
-const MintBadge = dynamic(() => import("@/components/MintBadge"), {
+const MintBadgePage = dynamic(() => import("@/features/v2/mintbadge"), {
   ssr: false,
   loading: () => (
     <div className="min-h-screen flex items-center justify-center">
@@ -120,12 +120,12 @@ export default function ClientApp({
   const handleNavigate = (view: string) => {
     setCurrentView(
       view as
-        | "home"
-        | "courses"
-        | "profile"
-        | "leaderboard"
-        | "balance"
-        | "mintbadge",
+      | "home"
+      | "courses"
+      | "profile"
+      | "leaderboard"
+      | "balance"
+      | "mintbadge",
     );
   };
 
@@ -152,7 +152,7 @@ export default function ClientApp({
   const renderView = () => {
     switch (currentView) {
       case "leaderboard":
-        return <Leaderboard onBack={handleBackToHome} />;
+        return <LeaderboardPage />;
 
       case "profile":
         return <Profile onBack={handleBackToHome} />;
@@ -167,7 +167,7 @@ export default function ClientApp({
         );
 
       case "mintbadge":
-        return <MintBadge onBack={handleBackToHome} />;
+        return <MintBadgePage onBack={handleBackToHome} />;
 
       case "balance":
         return <MyBalance onBack={handleBackToHome} />;
@@ -179,7 +179,7 @@ export default function ClientApp({
           //       context?.user?.displayName || context?.user?.username || "User"
           //     }
           //   />
-          <HomePage />
+          <HomePage onNavigate={setCurrentView} />
         );
     }
   };

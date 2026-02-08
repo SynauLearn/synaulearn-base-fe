@@ -28,6 +28,10 @@ export function useUserStats(userId: UserId | undefined) {
     return useQuery(api.users.getStats, userId ? { userId } : "skip");
 }
 
+export function useHomeStats(userId: UserId | undefined) {
+    return useQuery(api.users.getHomeStats, userId ? { userId } : "skip");
+}
+
 export function useLeaderboard(limit?: number) {
     return useQuery(api.users.getLeaderboard, { limit });
 }

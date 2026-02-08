@@ -265,6 +265,8 @@ export const getLessonsProgressForCourse = query({
 });
 
 // ============ GET ALL COURSES PROGRESS ============
+// REFACTORED: Now reads from pre-computed user_course_progress table (O(courses))
+// instead of calculating from cards (O(courses × lessons × cards))
 export const getAllCoursesProgress = query({
     args: {
         userId: v.id("users"),
@@ -273,48 +275,51 @@ export const getAllCoursesProgress = query({
         // Get all courses
         const courses = await ctx.db.query("courses").collect();
 
-        const result: { courseId: string; progress: number }[] = [];
+        // Get user's course progress entries (single query, efficient)
+        const userCourseProgress = await ctx.db
+            .query("user_course_progress")
+            .withIndex("by_user", (q) => q.eq("user_id", args.userId))
+            .collect();
+
+        // Create a map for quick lookup
+        const progressMap = new Map(
+            userCourseProgress.map(p => [p.course_id, p])
+        );
+
+        const result: { courseId: string; progress: number; completed: boolean }[] = [];
 
         for (const course of courses) {
-            // Get all lessons in course
-            const lessons = await ctx.db
-                .query("lessons")
-                .withIndex("by_course", (q) => q.eq("course_id", course._id))
-                .collect();
+            const courseProgress = progressMap.get(course._id);
 
-            if (lessons.length === 0) {
-                result.push({ courseId: course._id, progress: 0 });
-                continue;
-            }
-
-            // Count total cards and completed cards
-            let totalCards = 0;
-            let completedCards = 0;
-
-            for (const lesson of lessons) {
-                const cards = await ctx.db
-                    .query("cards")
-                    .withIndex("by_lesson", (q) => q.eq("lesson_id", lesson._id))
+            if (courseProgress) {
+                // Get total cards in course for percentage calculation
+                const lessons = await ctx.db
+                    .query("lessons")
+                    .withIndex("by_course", (q) => q.eq("course_id", course._id))
                     .collect();
 
-                totalCards += cards.length;
-
-                for (const card of cards) {
-                    const progress = await ctx.db
-                        .query("user_card_progress")
-                        .withIndex("by_user_and_card", (q) =>
-                            q.eq("user_id", args.userId).eq("card_id", card._id)
-                        )
-                        .first();
-
-                    if (progress?.quiz_completed) {
-                        completedCards++;
-                    }
+                let totalCards = 0;
+                for (const lesson of lessons) {
+                    const cardsCount = await ctx.db
+                        .query("cards")
+                        .withIndex("by_lesson", (q) => q.eq("lesson_id", lesson._id))
+                        .collect();
+                    totalCards += cardsCount.length;
                 }
-            }
 
-            const progressPercent = totalCards === 0 ? 0 : Math.round((completedCards / totalCards) * 100);
-            result.push({ courseId: course._id, progress: progressPercent });
+                const progressPercent = totalCards === 0
+                    ? 0
+                    : Math.round((courseProgress.cards_completed / totalCards) * 100);
+
+                result.push({
+                    courseId: course._id,
+                    progress: progressPercent,
+                    completed: !!courseProgress.completed_at
+                });
+            } else {
+                // No progress for this course
+                result.push({ courseId: course._id, progress: 0, completed: false });
+            }
         }
 
         return result;

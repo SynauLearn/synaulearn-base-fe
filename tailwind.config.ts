@@ -12,7 +12,24 @@ const config: Config = {
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        lavender: "#dce1fc",
+        beige: "#fdf8e1",
+        khaki: "#f5e187",
+        darkslategray: "#2d2d2d",
+        darkgray: "#a7a7a7",
+      },
+      animation: {
+        shimmer: "shimmer 1.5s infinite",
+      },
+      keyframes: {
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
+    },
   },
   plugins: [],
 };
