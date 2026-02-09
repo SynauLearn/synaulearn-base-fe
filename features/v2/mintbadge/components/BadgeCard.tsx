@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Image from "next/image";
 import { Info } from "lucide-react";
 
@@ -11,6 +12,18 @@ interface BadgeCardProps {
 }
 
 const BadgeCard = ({ title, status, image, onMint }: BadgeCardProps) => {
+    const [isMinting, setIsMinting] = useState(false);
+
+    const handleMint = async () => {
+        if (!onMint || isMinting) return;
+        setIsMinting(true);
+        try {
+            await onMint();
+        } finally {
+            setIsMinting(false);
+        }
+    };
+
     return (
         <div className="w-full shadow-[0px_2px_20px_rgba(0,_0,_0,_0.04)] rounded-[16px] bg-white flex flex-col items-center justify-center p-3 gap-3">
             <div className={`self-stretch h-[124px] rounded-[16px] flex items-center justify-center p-3 overflow-hidden relative ${status === 'locked' ? 'bg-[#E5E7EB]' : 'bg-[#FDF8E1]'}`}>
@@ -53,10 +66,18 @@ const BadgeCard = ({ title, status, image, onMint }: BadgeCardProps) => {
 
             {status === "unlocked" && (
                 <button
-                    onClick={onMint}
-                    className="self-stretch h-9 rounded-3xl bg-[#2D2D2D] flex items-center justify-center py-2 px-3 text-white text-[12px] font-semibold hover:bg-black transition-colors relative isolate group"
+                    onClick={handleMint}
+                    disabled={isMinting}
+                    className={`self-stretch h-9 rounded-3xl flex items-center justify-center py-2 px-3 text-white text-[12px] font-semibold transition-colors relative isolate group ${isMinting ? "bg-[#4B4B4B] cursor-not-allowed" : "bg-[#2D2D2D] hover:bg-black"}`}
                 >
-                    <span className="tracking-[0.01em] z-10">Mint</span>
+                    {isMinting ? (
+                        <span className="flex items-center gap-2 tracking-[0.01em] z-10">
+                            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/60 border-t-white" />
+                            Minting...
+                        </span>
+                    ) : (
+                        <span className="tracking-[0.01em] z-10">Mint</span>
+                    )}
                 </button>
             )}
 

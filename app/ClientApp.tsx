@@ -120,12 +120,12 @@ export default function ClientApp({
   const handleNavigate = (view: string) => {
     setCurrentView(
       view as
-        | "home"
-        | "courses"
-        | "profile"
-        | "leaderboard"
-        | "balance"
-        | "mintbadge",
+      | "home"
+      | "courses"
+      | "profile"
+      | "leaderboard"
+      | "balance"
+      | "mintbadge",
     );
   };
 
@@ -187,7 +187,7 @@ export default function ClientApp({
   return (
     <LocaleProvider>
       {/* Eruda Debug Console - remove in production */}
-      <ErudaDebugger enabled={true} />
+      <ErudaDebugger enabled={false} />
       {/* Welcome Modal for first-time users */}
       {showWelcome && (
         <Suspense fallback={null}>

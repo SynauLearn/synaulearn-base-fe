@@ -255,7 +255,7 @@ const CoursesPage: FC<CoursesPageProps> = ({
           <p className="text-gray-400">{t("courses.loading")}</p>
         </div>
       ) : (
-        <section className="relative min-h-screen w-full bg-sapphire-200/10 pt-5 overflow-y-auto">
+        <section className="relative min-h-screen w-full bg-sapphire-200/10 pt-5 overflow-x-hidden overflow-y-auto">
           <div className="relative flex gap-2 px-5 z-20">
             <div className="p-4 bg-white rounded-2xl w-3/4">
               <div className="flex gap-2 items-center">
