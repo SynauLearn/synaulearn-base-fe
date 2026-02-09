@@ -115,6 +115,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
     // Farcaster Frame
     other: {
+      "base:app_id": "698a48a9c75297e50f17bf9c",
       "fc:frame": JSON.stringify({
         version: miniapp.version,
         imageUrl: miniapp.heroImageUrl,
