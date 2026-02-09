@@ -97,8 +97,6 @@ export default function QuizView({
             question={quiz.question}
             options={quiz.options || []}
             correctAnswer={quiz.correct_answer}
-            onComplete={handleQuizComplete}
-            onBack={onBackToFlashcard}
           />
         );
 
@@ -107,8 +105,6 @@ export default function QuizView({
           <TrueFalseQuiz
             question={quiz.question}
             correctAnswer={quiz.correct_answer as "true" | "false"}
-            onComplete={handleQuizComplete}
-            onBack={onBackToFlashcard}
           />
         );
 
@@ -119,8 +115,6 @@ export default function QuizView({
             correctAnswer={quiz.correct_answer}
             acceptableAnswers={quiz.acceptable_answers}
             hint={quiz.hint}
-            onComplete={handleQuizComplete}
-            onBack={onBackToFlashcard}
           />
         );
 

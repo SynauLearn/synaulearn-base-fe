@@ -16,7 +16,7 @@ import HomePage from "@/features/v2/home";
 const WelcomeModal = lazy(() => import("@/components/WelcomeModal"));
 const Drawer = lazy(() => import("@/components/Drawer"));
 const LeaderboardPage = lazy(() => import("@/features/v2/leaderboard"));
-const CoursesPage = lazy(() => import("@/features/Courses"));
+const CoursesPage = lazy(() => import("@/features/v2/courses"));
 
 // Dynamic import with SSR disabled for wallet-heavy components
 // This prevents wallet code from being included in initial SSR bundle
@@ -62,7 +62,7 @@ export default function ClientApp({
     "home" | "courses" | "profile" | "leaderboard" | "balance" | "mintbadge"
   >("home");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_isLessonStart, setIsLessonStart] = useState(false);
+  const [isLessonStart, setIsLessonStart] = useState(false);
   const { context } = useMiniKit();
 
   // Hydrate preloaded data - courses will be reactive after hydration
@@ -120,12 +120,12 @@ export default function ClientApp({
   const handleNavigate = (view: string) => {
     setCurrentView(
       view as
-      | "home"
-      | "courses"
-      | "profile"
-      | "leaderboard"
-      | "balance"
-      | "mintbadge",
+        | "home"
+        | "courses"
+        | "profile"
+        | "leaderboard"
+        | "balance"
+        | "mintbadge",
     );
   };
 
@@ -223,7 +223,9 @@ export default function ClientApp({
         >
           {renderView()}
         </Suspense>
-        <BottomBar currentView={currentView} onNavigate={handleNavigate} />
+        {!isLessonStart && (
+          <BottomBar currentView={currentView} onNavigate={handleNavigate} />
+        )}
       </main>
     </LocaleProvider>
   );
