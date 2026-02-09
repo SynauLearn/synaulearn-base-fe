@@ -7,7 +7,7 @@ import { LocaleProvider } from "@/lib/LocaleContext";
 // import Header from "@/components/Header";
 // import BottomNav from "@/components/BottomNav";
 // import HomeView from "@/components/HomeView";
-import ErudaDebugger from "@/components/ErudaDebugger";
+// import ErudaDebugger from "@/components/ErudaDebugger";
 import { api } from "@/convex/_generated/api";
 import BottomBar from "@/components/v2/BottomBar";
 import HomePage from "@/features/v2/home";
@@ -187,7 +187,7 @@ export default function ClientApp({
   return (
     <LocaleProvider>
       {/* Eruda Debug Console - remove in production */}
-      <ErudaDebugger enabled={false} />
+      {/* <ErudaDebugger enabled={false} /> */}
       {/* Welcome Modal for first-time users */}
       {showWelcome && (
         <Suspense fallback={null}>
