@@ -62,7 +62,7 @@ export default function ClientApp({
     "home" | "courses" | "profile" | "leaderboard" | "balance" | "mintbadge"
   >("home");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [_isLessonStart, setIsLessonStart] = useState(false);
+  const [isLessonStart, setIsLessonStart] = useState(false);
   const { context } = useMiniKit();
 
   // Hydrate preloaded data - courses will be reactive after hydration
@@ -160,7 +160,7 @@ export default function ClientApp({
       case "courses":
         return (
           <CoursesPage
-            // setIsLessonStart={setIsLessonStart}
+            setIsLessonStart={setIsLessonStart}
             preloadedCourses={courses}
             preloadedCategories={categories}
           />
@@ -223,7 +223,9 @@ export default function ClientApp({
         >
           {renderView()}
         </Suspense>
-        <BottomBar currentView={currentView} onNavigate={handleNavigate} />
+        {!isLessonStart && (
+          <BottomBar currentView={currentView} onNavigate={handleNavigate} />
+        )}
       </main>
     </LocaleProvider>
   );
