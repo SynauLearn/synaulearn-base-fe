@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
+import { useQuery } from "convex/react";
 import { Progress } from "@/components/ui/progress";
 import LightningIcon from "@/assets/icons/lightning.svg";
 import ArrowLeftIcon from "@/assets/icons/arrow-left.svg";
@@ -17,6 +18,7 @@ import {
   UserId,
 } from "@/lib/convexApi";
 import { Id } from "@/convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
 import Image from "next/image";
 import CloudCourse from "@/assets/images/img-decoration-course-cloud.svg";
 import CatCourse from "@/assets/images/img-decoration-cat-course.svg";
@@ -51,6 +53,7 @@ const LessonPageSection = ({
     setIsCorrect,
     showResult,
     setShowResult,
+    selectedAnswer,
     setSelectedAnswer,
   } = useCourseContext();
 
@@ -72,6 +75,12 @@ const LessonPageSection = ({
   const [xpEarned, setXpEarned] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
+
+  const currentCardId = cardsData?.[currentCardIndex]?._id;
+  const quiz = useQuery(
+    api.quizzes.getByCardId,
+    currentCardId ? { cardId: currentCardId } : "skip",
+  );
 
   // Create or get user in Convex when wallet is connected
   useEffect(() => {
@@ -131,7 +140,17 @@ const LessonPageSection = ({
   const currentCard = cards[currentCardIndex];
   const totalCards = cards.length;
   const isLastCard = currentCardIndex === totalCards - 1;
-  //   const quiz = useQuery(api.quizzes.getByCardId, { cardId: currentCard._id });
+  const correctAnswerLabel = (() => {
+    if (!quiz) return "";
+    if (quiz.quiz_type === "multiple_choice") {
+      const option = quiz.options?.find((o) => o.id === quiz.correct_answer);
+      return option?.text || quiz.correct_answer;
+    }
+    if (quiz.quiz_type === "true_false") {
+      return quiz.correct_answer === "true" ? "True" : "False";
+    }
+    return quiz.correct_answer;
+  })();
 
   const handleFlashcardContinue = () => {
     setXpEarned(xpEarned + 5);
@@ -181,6 +200,32 @@ const LessonPageSection = ({
     setShowResult(false);
     setIsFlipped(true);
   };
+
+  const handleRetryQuiz = () => {
+    setSelectedAnswer("");
+    setIsCorrect(false);
+    setShowResult(false);
+  };
+
+  const primaryCtaLabel = (() => {
+    if (step === "quiz") {
+      if (showResult) {
+        return isCorrect
+          ? isLastCard
+            ? "Finish Lesson"
+            : "Next Lesson"
+          : "Try Again";
+      }
+
+      if (selectedAnswer) {
+        return isLastCard ? "Finish Lesson" : "Submit Answer";
+      }
+
+      return "Submit Answer";
+    }
+
+    return "Jump to Quiz";
+  })();
 
   // Show completion screen
   if (showCompletion) {
@@ -375,8 +420,7 @@ const LessonPageSection = ({
               {!isCorrect && (
                 <div className="flex py-1 px-2 justify-center items-center gap-2.5 rounded-sm bg-white">
                   <span className="text-graphite-400 font-inter text-xs font-semibold">
-                    {/* Correct answer: {quiz?.correct_answer} */}
-                    Correct answer:
+                    Correct answer: {correctAnswerLabel}
                   </span>
                 </div>
               )}
@@ -396,24 +440,26 @@ const LessonPageSection = ({
             <button
               onClick={() => {
                 if (step === "quiz") {
-                  showResult
-                    ? handleQuizComplete(isCorrect)
-                    : handleConfirmAnswer();
+                  if (showResult) {
+                    if (isCorrect) {
+                      handleQuizComplete(isCorrect);
+                    } else {
+                      handleRetryQuiz();
+                    }
+                  } else {
+                    handleConfirmAnswer();
+                  }
                 } else {
                   handleFlashcardContinue();
                 }
               }}
-              disabled={!isFlipped}
+              disabled={
+                !isFlipped || (step === "quiz" && !showResult && !selectedAnswer)
+              }
               className={`flex-3 w-full h-12 rounded-full items-center justify-center ${step === "quiz" && showResult ? (isCorrect ? "bg-spruce-500" : "bg-ruby-600") : "bg-graphite-700 disabled:bg-graphite-200"}`}
             >
               <span className="text-white font-semibold">
-                {step === "quiz" && showResult
-                  ? isCorrect
-                    ? isLastCard
-                      ? "Finish Lesson"
-                      : "Next Lesson"
-                    : "Try Again"
-                  : "Start Lesson"}
+                {primaryCtaLabel}
               </span>
             </button>
             {step === "quiz" && showResult && !isCorrect && (

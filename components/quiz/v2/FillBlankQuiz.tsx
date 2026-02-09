@@ -20,8 +20,14 @@ export default function FillBlankQuiz({
   const [userAnswer, setUserAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
 
-  const { selectedAnswer, showResult, isCorrect, handleAnswerSelect } =
-    useCourseContext();
+  const {
+    selectedAnswer,
+    setSelectedAnswer,
+    setIsCorrect,
+    showResult,
+    isCorrect,
+    handleAnswerSelect,
+  } = useCourseContext();
 
   const checkAnswer = (answer: string): boolean => {
     const normalizedAnswer = answer.toLowerCase().trim();
@@ -64,7 +70,13 @@ export default function FillBlankQuiz({
         <input
           type="text"
           value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            const correct = checkAnswer(value);
+            setUserAnswer(value);
+            setSelectedAnswer(value);
+            setIsCorrect(correct);
+          }}
           placeholder="Type your answer..."
           className="flex-1 h-6 p-4 text-graphite-700 rounded-2xl border-2 border-transparent focus:border-primary focus:outline-none placeholder-graphite-300 text-lg"
           autoComplete="off"

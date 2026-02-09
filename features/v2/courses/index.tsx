@@ -216,7 +216,9 @@ const CoursesPage: FC<CoursesPageProps> = ({
       languageFilter === "all" || course.language === languageFilter;
 
     // Filter by difficulty
-    const matchesDifficulty = course.difficulty === levelFilter[0];
+    const matchesDifficulty =
+      levelFilter.length === 0 ||
+      levelFilter.includes(course.difficulty as Level);
 
     // Filter by search query (searches in title and description)
     const matchesSearch =
@@ -345,7 +347,7 @@ const CoursesPage: FC<CoursesPageProps> = ({
             />
 
             <div className="flex flex-col items-start gap-3">
-              {coursesWithProgress.map(
+              {filteredCourses.map(
                 (course: ConvexCourse, index: number) => (
                   <CourseCard
                     key={course._id}

@@ -3,7 +3,7 @@ import { LucideX } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import CatFoodIcon from "@/assets/icons/cat-food.svg";
 
-export type Level = "basic" | "intermediate" | "advance";
+export type Level = "Basic" | "Advanced" | "Professional";
 
 interface LevelDrawerProps {
   open: boolean;
@@ -13,9 +13,9 @@ interface LevelDrawerProps {
 }
 
 const levels: { label: string; value: Level; dots: number }[] = [
-  { label: "Basic", value: "basic", dots: 1 },
-  { label: "Intermediate", value: "intermediate", dots: 2 },
-  { label: "Advance", value: "advance", dots: 3 },
+  { label: "Basic", value: "Basic", dots: 1 },
+  { label: "Advanced", value: "Advanced", dots: 2 },
+  { label: "Professional", value: "Professional", dots: 3 },
 ];
 
 const LevelDrawer = ({ open, value, onClose, onApply }: LevelDrawerProps) => {
@@ -50,9 +50,17 @@ const LevelDrawer = ({ open, value, onClose, onApply }: LevelDrawerProps) => {
             const active = tempSelected.includes(item.value);
 
             return (
-              <button
+              <div
                 key={item.value}
+                role="button"
+                tabIndex={0}
                 onClick={() => toggleLevel(item.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleLevel(item.value);
+                  }
+                }}
                 className="flex w-full items-center gap-2 py-3"
               >
                 <div className="w-20 flex">
@@ -69,7 +77,7 @@ const LevelDrawer = ({ open, value, onClose, onApply }: LevelDrawerProps) => {
                 </span>
 
                 <Checkbox checked={active} className="p-2" />
-              </button>
+              </div>
             );
           })}
 
@@ -77,11 +85,10 @@ const LevelDrawer = ({ open, value, onClose, onApply }: LevelDrawerProps) => {
             disabled={tempSelected.length === 0}
             onClick={() => onApply(tempSelected)}
             className={`mt-2 w-full flex rounded-full p-3 items-center justify-center font-semibold transition
-            ${
-              tempSelected.length === 0
+            ${tempSelected.length === 0
                 ? "bg-graphite-200 text-graphite-400"
                 : "bg-graphite-700  text-white"
-            }
+              }
           `}
           >
             Apply Filter
