@@ -33,6 +33,7 @@ interface CardViewProps {
   courseTitle: string;
   onBack: () => void;
   onComplete?: () => void;
+  onMintBadge?: () => void;
 }
 
 type Step = "flashcard" | "quiz" | "result";
@@ -42,6 +43,7 @@ const LessonPageSection = ({
   courseTitle,
   onBack,
   onComplete,
+  onMintBadge,
 }: CardViewProps) => {
   const { context } = useMiniKit();
   const siwfProfile = useSIWFProfile();
@@ -217,10 +219,6 @@ const LessonPageSection = ({
           : "Try Again";
       }
 
-      if (selectedAnswer) {
-        return isLastCard ? "Finish Lesson" : "Submit Answer";
-      }
-
       return "Submit Answer";
     }
 
@@ -236,6 +234,7 @@ const LessonPageSection = ({
         cardsCompleted={totalCards}
         correctAnswers={correctCount}
         onBackToCourses={onBack}
+        onMintBadge={onMintBadge}
       />
     );
   }

@@ -161,6 +161,7 @@ export default function ClientApp({
         return (
           <CoursesPage
             setIsLessonStart={setIsLessonStart}
+            onNavigate={handleNavigate}
             preloadedCourses={courses}
             preloadedCategories={categories}
           />

@@ -10,6 +10,7 @@ interface CompletePageSectionProps {
   cardsCompleted: number;
   correctAnswers: number;
   onBackToCourses: () => void;
+  onMintBadge?: () => void;
 }
 
 const CompletePageSection = ({
@@ -18,6 +19,7 @@ const CompletePageSection = ({
   cardsCompleted,
   correctAnswers,
   onBackToCourses,
+  onMintBadge,
 }: CompletePageSectionProps) => {
   const accuracy = Math.round((correctAnswers / cardsCompleted) * 100);
 
@@ -152,7 +154,10 @@ const CompletePageSection = ({
           </div>
         </div>
 
-        <button className="absolute bottom-0 right-2.5 bg-black flex items-center justify-center p-3 rounded-3xl w-36.5 h-17">
+        <button
+          onClick={onMintBadge}
+          className="absolute bottom-0 right-2.5 bg-black flex items-center justify-center p-3 rounded-3xl w-36.5 h-17"
+        >
           <span className="font-semibold text-white">Mint Badge</span>
         </button>
       </section>

@@ -54,6 +54,7 @@ type ConvexCategory = {
 
 interface CoursesPageProps {
   setIsLessonStart: React.Dispatch<React.SetStateAction<boolean>>;
+  onNavigate?: (view: "home" | "courses" | "profile" | "leaderboard" | "balance" | "mintbadge") => void;
   // Optional: preloaded data from SSR
   preloadedCourses?: ConvexCourse[];
   preloadedCategories?: ConvexCategory[];
@@ -61,6 +62,7 @@ interface CoursesPageProps {
 
 const CoursesPage: FC<CoursesPageProps> = ({
   setIsLessonStart,
+  onNavigate,
   preloadedCourses,
   preloadedCategories,
 }) => {
@@ -239,6 +241,7 @@ const CoursesPage: FC<CoursesPageProps> = ({
           courseTitle={selectedLesson.courseTitle}
           onBack={handleBackToLessons}
           onComplete={handleLessonComplete}
+          onMintBadge={() => onNavigate?.("mintbadge")}
         />
       ) : selectedCourseForLessons ? (
         <CourseDetail

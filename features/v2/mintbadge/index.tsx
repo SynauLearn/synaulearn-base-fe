@@ -20,7 +20,7 @@ const MintBadgePage = ({ onBack }: MintBadgePageProps) => {
     } = useMintBadge();
 
     return (
-        <div className="relative w-full flex flex-col min-h-screen py-5 px-8 bg-[#DCE1FC] overflow-x-hidden">
+        <div className="relative w-full flex flex-col min-h-screen py-5 px-5 bg-[#DCE1FC] overflow-x-hidden">
             {ToastComponent}
             {/* Background Decorations */}
             <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
