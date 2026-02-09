@@ -39,5 +39,6 @@ export const minikitConfig = {
     ogTitle: "Learn Web3 and Earn NFT Badges",
     ogDescription: "Interactive micro-learning for Web3. Complete courses and mint achievements as NFT badges.",
     ogImageUrl: `${ROOT_URL}/hero.png`,
+    noindex: false,
   },
 } as const;
