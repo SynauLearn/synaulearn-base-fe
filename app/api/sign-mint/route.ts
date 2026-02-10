@@ -85,17 +85,17 @@ export async function POST(request: NextRequest) {
 
         const courseIdNumeric = course.course_number;
 
-        // Find user by wallet address (primary) or FID (secondary)
+        // Find user by FID (preferred when available) or wallet address
         let user;
 
-        // Primary lookup: wallet address
-        user = await convex.query(api.users.getByWallet, {
-            wallet_address: userAddress.toLowerCase()
-        });
-
-        // Secondary lookup: FID (if wallet not found)
-        if (!user && fid) {
+        if (fid) {
             user = await convex.query(api.users.getByFid, { fid });
+        }
+
+        if (!user) {
+            user = await convex.query(api.users.getByWallet, {
+                wallet_address: userAddress.toLowerCase()
+            });
         }
 
         if (!user) {

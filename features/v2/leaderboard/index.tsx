@@ -34,7 +34,7 @@ const MOCK_LEADERBOARD_DATA: LeaderboardUser[] = [
 ];
 
 const LeaderboardPage = ({ onBack }: LeaderboardPageProps) => {
-    const { user: authUser, isAuthenticated } = useUnifiedAuth();
+    const { user: authUser, isAuthenticated, isInMiniApp } = useUnifiedAuth();
 
     // Fetch leaderboard data from Convex
     const leaderboardData = useLeaderboard(50);
@@ -52,7 +52,9 @@ const LeaderboardPage = ({ onBack }: LeaderboardPageProps) => {
 
         if (!leaderboardData) return [];
         return leaderboardData.map((user, index) => {
-            const isCurrentUser = authUser?.walletAddress?.toLowerCase() === user.wallet_address?.toLowerCase();
+            const isCurrentUser = isInMiniApp
+                ? authUser?.fid === user.fid
+                : authUser?.walletAddress?.toLowerCase() === user.wallet_address?.toLowerCase();
             return {
                 id: user._id,
                 username: user.username || null,
