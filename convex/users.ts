@@ -274,24 +274,13 @@ export const getHomeStats = query({
             }
         }
 
-        // 4. Get Recommended Courses
-        let recommendedCourses = [];
+        // 4. Get Recommended Courses (random 3)
         const allCourses = await ctx.db.query("courses").collect(); // Small dataset, safe to scan
-
-        if (isNewUser) {
-            // Recommendation Strategy: Beginner / Basic Difficulty
-            recommendedCourses = allCourses
-                .filter(c => c.difficulty === 'Basic')
-                .slice(0, 2);
-        } else {
-            // Recommendation Strategy: Next available (not completed)
-            const completedCourseIds = new Set(courseProgress.filter(c => c.completed_at).map(c => c.course_id));
-            recommendedCourses = allCourses
-                .filter(c => !completedCourseIds.has(c._id))
-                // Prioritize by order if available, or just created_at
-                .sort((a, b) => a.created_at - b.created_at)
-                .slice(0, 2);
-        }
+        const shuffled = allCourses
+            .map((course) => ({ course, sort: Math.random() }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ course }) => course);
+        const recommendedCourses = shuffled.slice(0, 3);
 
         // 5. Streak Calculation (Consecutive Days of Activity)
         // A streak counts consecutive days where the user completed at least one card

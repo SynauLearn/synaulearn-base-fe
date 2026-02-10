@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import MailIcon from "@/assets/icons/mail.svg";
 import { ChevronRight, User } from "lucide-react";
@@ -117,12 +116,13 @@ const GreetingsSection = ({
               <h2 className="text-sm font-extrabold text-zinc-800 leading-tight">
                 Hey, genius. <br /> Ready to level up?
               </h2>
-              <Link href="/courses">
-                <div className="px-4 py-3 bg-zinc-800 rounded-full inline-flex justify-center items-center gap-1 min-w-[140px]">
-                  <h3 className="font-normal text-xs text-white">Open Course</h3>
-                  <ChevronRight className="w-4 h-4 text-white" />
-                </div>
-              </Link>
+              <button
+                onClick={onContinueLearning}
+                className="px-4 py-3 bg-zinc-800 rounded-full inline-flex justify-center items-center gap-1 min-w-[140px]"
+              >
+                <h3 className="font-normal text-xs text-white">Open Course</h3>
+                <ChevronRight className="w-4 h-4 text-white" />
+              </button>
             </>
           )}
         </div>
