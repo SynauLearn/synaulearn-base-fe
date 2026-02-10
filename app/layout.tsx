@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import ReactLenis from "lenis/react";
 import { minikitConfig } from "@/minikit.config";
 import { ClientProviders } from "./ClientProviders";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const ROOT_URL = process.env.NEXT_PUBLIC_APP_URL || "https://synaulearn.space";
@@ -181,6 +183,8 @@ export default function RootLayout({
         <JsonLd />
       </head>
       <body>
+        <Analytics />
+        <SpeedInsights />
         <ReactLenis root>
           <ClientProviders>{children}</ClientProviders>
         </ReactLenis>
