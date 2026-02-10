@@ -60,11 +60,11 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
         isNewUser={isNewUser}
         recommendedCourses={homeStats?.recommendedCourses}
         loading={isLoading}
+        onOpenCourses={handleContinueLearning}
       />
     </section>
   );
 };
 
 export default HomePage;
-
 

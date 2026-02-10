@@ -83,7 +83,10 @@ const GreetingsSection = ({
 
         {/* Dynamic Card */}
         <div className="absolute left-6 w-[200px] bottom-6 flex flex-col items-start py-3 px-4 gap-3 rounded-[20px] bg-white shadow-sm">
-          {!isNewUser && lastActiveCourse ? (
+          {!isNewUser &&
+          lastActiveCourse &&
+          lastActiveCourse.progress > 0 &&
+          lastActiveCourse.progress < 100 ? (
             // Returning User: Course Progress
             <button onClick={onContinueLearning} className="w-full text-left">
               <div className="flex flex-col gap-2 w-full">
@@ -157,4 +160,3 @@ const GreetingsSection = ({
 };
 
 export default GreetingsSection;
-

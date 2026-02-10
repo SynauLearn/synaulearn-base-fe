@@ -20,6 +20,7 @@ interface DashboardSectionProps {
   isNewUser?: boolean;
   recommendedCourses?: Doc<"courses">[];
   loading?: boolean;
+  onOpenCourses?: () => void;
 }
 
 const DashboardSection = ({
@@ -27,7 +28,8 @@ const DashboardSection = ({
   dailyProgress,
   isNewUser = true,
   recommendedCourses = [],
-  loading = false
+  loading = false,
+  onOpenCourses
 }: DashboardSectionProps) => {
 
   if (loading) {
@@ -139,12 +141,13 @@ const DashboardSection = ({
               {!isNewUser && <div className="text-[10px] text-graphite-700">Do them. Get rewards. Repeat.</div>}
             </div>
             {!isNewUser && (
-              <Link href="/courses">
-                <div className="px-3 py-1.5 bg-zinc-800 rounded-full flex items-center gap-1">
-                  <span className="text-[10px] font-bold text-white">Take Quests</span>
-                  <ChevronRight className="w-3 h-3 text-white" />
-                </div>
-              </Link>
+              <div
+                className="px-3 py-1.5 bg-zinc-800 rounded-full flex items-center gap-1"
+                aria-disabled="true"
+              >
+                <span className="text-[10px] font-bold text-white">Take Quests</span>
+                <ChevronRight className="w-3 h-3 text-white" />
+              </div>
             )}
           </div>
 
@@ -200,7 +203,19 @@ const DashboardSection = ({
         <h3 className="self-stretch text-zinc-800 text-base font-normal leading-5 px-1">Recommend For You</h3>
         <div className="w-full flex flex-row gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory scroll-smooth -mx-2 px-2">
           {recommendedCourses.map((course) => (
-            <Link key={course._id} href={`/courses/${course._id}`} className="shrink-0 w-72 snap-start">
+            <div
+              key={course._id}
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpenCourses?.()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpenCourses?.();
+                }
+              }}
+              className="shrink-0 w-72 snap-start"
+            >
               <div className="w-full px-3 py-3 bg-white rounded-2xl inline-flex flex-col justify-start items-start gap-2.5 shadow-sm">
                 <div className="w-full inline-flex justify-between items-center">
                   <div className="px-2 py-1 bg-indigo-500 rounded-lg flex justify-center items-center gap-2.5">
@@ -243,7 +258,7 @@ const DashboardSection = ({
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
           {recommendedCourses.length === 0 && (
             <div className="w-full text-center py-4 text-zinc-500 text-xs">
@@ -257,4 +272,3 @@ const DashboardSection = ({
 };
 
 export default DashboardSection;
-
