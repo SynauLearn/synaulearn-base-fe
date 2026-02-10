@@ -10,13 +10,15 @@ interface HomePageProps {
 }
 
 const HomePage = ({ onNavigate }: HomePageProps) => {
-  const { user: authUser, isLoading: isAuthLoading } = useUnifiedAuth();
+  const { user: authUser, isLoading: isAuthLoading, isInMiniApp } = useUnifiedAuth();
 
   // Resolve Convex User
-  // Prioritize wallet lookup, fall back to FID if available
-  const walletUser = useUserByWallet(authUser?.walletAddress);
+  // In mini apps, prefer FID to avoid wallet reconnect flicker
+  const walletUser = useUserByWallet(
+    isInMiniApp ? undefined : authUser?.walletAddress
+  );
   const fidUser = useUserByFid(authUser?.fid);
-  const convexUser = walletUser || fidUser;
+  const convexUser = isInMiniApp ? fidUser : (walletUser || fidUser);
 
   // Extract stable userId to prevent unnecessary re-renders
   const userId = convexUser?._id;
@@ -67,4 +69,3 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
 };
 
 export default HomePage;
-

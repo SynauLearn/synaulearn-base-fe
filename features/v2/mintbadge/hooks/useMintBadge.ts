@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { baseSepolia } from "wagmi/chains";
 import {
     BadgeContract,
@@ -39,6 +40,7 @@ export function useMintBadge() {
     const { switchChain } = useSwitchChain();
     const { writeContractAsync } = useWriteContract();
     const { showToast, ToastComponent } = useToast();
+    const { context } = useMiniKit();
 
     // State
     const [filter, setFilter] = useState<FilterType>("all");
@@ -151,6 +153,15 @@ export function useMintBadge() {
 
         if (!isConnected || !address) {
             showToast("⚠️ Please connect your wallet first", "error");
+            return;
+        }
+
+        // Base App does not support signing on Base Sepolia.
+        if (context?.client?.clientFid === 309857) {
+            showToast(
+                "Minting on Base Sepolia only available through Farcaster App",
+                "error"
+            );
             return;
         }
 
