@@ -242,7 +242,10 @@ const CoursesPage: FC<CoursesPageProps> = ({
           courseTitle={selectedLesson.courseTitle}
           onBack={handleBackToLessons}
           onComplete={handleLessonComplete}
-          onMintBadge={() => onNavigate?.("mintbadge")}
+          onMintBadge={() => {
+            setIsLessonStart(false);
+            onNavigate?.("mintbadge");
+          }}
         />
       ) : selectedCourseForLessons ? (
         <CourseDetail
