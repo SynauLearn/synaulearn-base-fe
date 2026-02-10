@@ -4,6 +4,7 @@ import HonourStarIcon from "@/assets/icons/honour-star.svg";
 import { Id } from "@/convex/_generated/dataModel";
 import {
   useCourseProgressPercentage,
+  useCourseProgress,
   useLessonsByCourse,
   useLessonsProgressForCourse,
   UserId,
@@ -37,6 +38,7 @@ const CourseDetail = ({
     userId ?? undefined,
     courseId,
   );
+  const courseProgressData = useCourseProgress(userId ?? undefined, courseId);
   const lessonsProgress = useLessonsProgressForCourse(
     userId ?? undefined,
     courseId,
@@ -61,6 +63,14 @@ const CourseDetail = ({
     }
     return map;
   }, [lessonsProgress]);
+
+  const totalCards = useMemo(() => {
+    return Object.values(progressMap).reduce((sum, p) => sum + p.total, 0);
+  }, [progressMap]);
+
+  const completedCards = useMemo(() => {
+    return Object.values(progressMap).reduce((sum, p) => sum + p.done, 0);
+  }, [progressMap]);
 
   if (loading) {
     return (
@@ -145,11 +155,11 @@ const CourseDetail = ({
           </div>
           <div className="flex py-2 px-3 justify-center items-center gap-2 rounded-2xl bg-primary/20 backdrop-blur-xs">
             <h4 className="font-inter text-xs text-graphite-700 text-center">
-              <span className="font-semibold">0</span> Cards
+              <span className="font-semibold">{totalCards}</span> Cards
             </h4>
             <div className="size-1 bg-primary rounded-full" />
             <h4 className="font-inter text-xs text-graphite-700 text-center">
-              <span className="font-semibold">0</span> Quiz
+              <span className="font-semibold">{completedCards}</span> Quiz
             </h4>
             {/* <div className="size-1 bg-primary rounded-full" />
             <span className="text-xs font-semibold text-white text-center">
@@ -160,7 +170,7 @@ const CourseDetail = ({
 
         <div className="absolute size-12 bottom-0 right-0 bg-primary rounded-full flex items-center justify-center p-2">
           <span className="text-xs font-semibold text-white text-center">
-            1200 XP
+            {(courseProgressData?.total_xp_earned ?? 0).toString()} XP
           </span>
         </div>
       </div>

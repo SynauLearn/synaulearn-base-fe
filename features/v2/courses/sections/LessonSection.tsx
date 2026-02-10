@@ -165,7 +165,7 @@ const LessonPageSection = ({
       setCorrectCount(correctCount + 1);
     }
 
-    if (convexUserId && currentCard) {
+    if (convexUserId && currentCard && isCorrect) {
       try {
         await saveCardProgress({
           userId: convexUserId,

@@ -10,6 +10,7 @@ export const saveCardProgress = mutation({
     },
     handler: async (ctx, args) => {
         const xpEarned = args.quizCorrect ? 15 : 5;
+        const now = Date.now();
 
         // Check if progress already exists
         const existing = await ctx.db
@@ -26,7 +27,7 @@ export const saveCardProgress = mutation({
                 quiz_completed: true,
                 quiz_correct: args.quizCorrect,
                 xp_earned: xpEarned,
-                completed_at: Date.now(),
+                completed_at: now,
             });
         } else {
             // Create new progress
@@ -37,7 +38,7 @@ export const saveCardProgress = mutation({
                 quiz_completed: true,
                 quiz_correct: args.quizCorrect,
                 xp_earned: xpEarned,
-                completed_at: Date.now(),
+                completed_at: now,
             });
         }
 
@@ -46,8 +47,74 @@ export const saveCardProgress = mutation({
         if (user) {
             await ctx.db.patch(args.userId, {
                 total_xp: user.total_xp + xpEarned,
-                updated_at: Date.now(),
+                updated_at: now,
             });
+        }
+
+        // Update course progress (aggregate by course)
+        const card = await ctx.db.get(args.cardId);
+        if (card) {
+            const lesson = await ctx.db.get(card.lesson_id);
+            if (lesson) {
+                const courseId = lesson.course_id;
+                const courseProgress = await ctx.db
+                    .query("user_course_progress")
+                    .withIndex("by_user_and_course", (q) =>
+                        q.eq("user_id", args.userId).eq("course_id", courseId)
+                    )
+                    .first();
+
+                const wasCorrect = existing?.quiz_correct ?? false;
+                const incrementCompleted =
+                    args.quizCorrect && !wasCorrect ? 1 : 0;
+
+                const nextCardsCompleted =
+                    (courseProgress?.cards_completed ?? 0) + incrementCompleted;
+                const nextTotalXp =
+                    (courseProgress?.total_xp_earned ?? 0) + xpEarned;
+
+                let completedAt = courseProgress?.completed_at;
+
+                if (!completedAt && incrementCompleted > 0) {
+                    const lessons = await ctx.db
+                        .query("lessons")
+                        .withIndex("by_course", (q) =>
+                            q.eq("course_id", courseId)
+                        )
+                        .collect();
+
+                    let totalCards = 0;
+                    for (const l of lessons) {
+                        const cards = await ctx.db
+                            .query("cards")
+                            .withIndex("by_lesson", (q) =>
+                                q.eq("lesson_id", l._id)
+                            )
+                            .collect();
+                        totalCards += cards.length;
+                    }
+
+                    if (totalCards > 0 && nextCardsCompleted >= totalCards) {
+                        completedAt = now;
+                    }
+                }
+
+                if (courseProgress) {
+                    await ctx.db.patch(courseProgress._id, {
+                        cards_completed: nextCardsCompleted,
+                        total_xp_earned: nextTotalXp,
+                        completed_at: completedAt,
+                    });
+                } else {
+                    await ctx.db.insert("user_course_progress", {
+                        user_id: args.userId,
+                        course_id: courseId,
+                        cards_completed: nextCardsCompleted,
+                        total_xp_earned: nextTotalXp,
+                        completed_at: completedAt,
+                    });
+                }
+            }
         }
 
         return { xpEarned };

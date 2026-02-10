@@ -38,6 +38,7 @@ type ConvexCourse = {
   category_id?: Id<"categories">;
   total_lessons: number;
   created_at: number;
+  progress?: number;
 };
 
 type ConvexCategory = {
@@ -357,7 +358,7 @@ const CoursesPage: FC<CoursesPageProps> = ({
                     id={index + 1}
                     title={course.title}
                     description={course.description || ""}
-                    progress={0}
+                    progress={course.progress ?? 0}
                     image={course.emoji || "📚"}
                     onClick={() => handleCourseClick(course._id)}
                     totalLessons={course.total_lessons}

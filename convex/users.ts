@@ -233,14 +233,40 @@ export const getHomeStats = query({
                 if (lastLesson) {
                     const course = await ctx.db.get(lastLesson.course_id);
                     if (course) {
-                        // Calculate progress % for this course
-                        // Get total cards in course (approximate or fetch)
-                        // For MVP, simplified progress:
+                        // Calculate progress % for this course based on completed cards
+                        const lessons = await ctx.db
+                            .query("lessons")
+                            .withIndex("by_course", (q) => q.eq("course_id", course._id))
+                            .collect();
+
+                        let totalCards = 0;
+                        let completedCards = 0;
+
+                        for (const lesson of lessons) {
+                            const cards = await ctx.db
+                                .query("cards")
+                                .withIndex("by_lesson", (q) => q.eq("lesson_id", lesson._id))
+                                .collect();
+
+                            totalCards += cards.length;
+
+                            for (const card of cards) {
+                                const progress = cardProgress.find(p => p.card_id === card._id);
+                                if (progress?.quiz_completed) {
+                                    completedCards++;
+                                }
+                            }
+                        }
+
+                        const progressPercent = totalCards === 0
+                            ? 0
+                            : Math.round((completedCards / totalCards) * 100);
+
                         lastActiveCourse = {
                             id: course._id,
                             title: course.title,
                             lessonCount: course.total_lessons,
-                            progress: 10, // Mocked 10% for now or calculate real if needed
+                            progress: progressPercent,
                             emoji: course.emoji
                         };
                     }
@@ -332,4 +358,3 @@ export const getHomeStats = query({
         };
     },
 });
-
