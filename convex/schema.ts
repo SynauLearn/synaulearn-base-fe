@@ -18,6 +18,7 @@ export default defineSchema({
     })
         .index("by_wallet", ["wallet_address"])  // Primary lookup
         .index("by_fid", ["fid"])               // Secondary lookup for Farcaster
+        .index("by_total_xp", ["total_xp"])
         .index("by_clerk_id", ["clerk_id"]),    // Admin lookup
 
     // ============ CATEGORIES ============

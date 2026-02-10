@@ -126,15 +126,11 @@ export const getLeaderboard = query({
     args: { limit: v.optional(v.number()) },
     handler: async (ctx, args) => {
         const limit = args.limit ?? 10;
-        const users = await ctx.db
+        return await ctx.db
             .query("users")
+            .withIndex("by_total_xp")
             .order("desc")
-            .take(100); // Get more than needed to sort
-
-        // Sort by XP descending and take limit
-        return users
-            .sort((a, b) => b.total_xp - a.total_xp)
-            .slice(0, limit);
+            .take(limit);
     },
 });
 
