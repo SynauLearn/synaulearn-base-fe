@@ -51,7 +51,7 @@ export const saveCardProgress = mutation({
             });
         }
 
-        // Update course progress (aggregate by course)
+        // Update course progress (recalculate from card progress for accuracy)
         const card = await ctx.db.get(args.cardId);
         if (card) {
             const lesson = await ctx.db.get(card.lesson_id);
@@ -64,53 +64,61 @@ export const saveCardProgress = mutation({
                     )
                     .first();
 
-                const wasCorrect = existing?.quiz_correct ?? false;
-                const incrementCompleted =
-                    args.quizCorrect && !wasCorrect ? 1 : 0;
+                const lessons = await ctx.db
+                    .query("lessons")
+                    .withIndex("by_course", (q) => q.eq("course_id", courseId))
+                    .collect();
 
-                const nextCardsCompleted =
-                    (courseProgress?.cards_completed ?? 0) + incrementCompleted;
-                const nextTotalXp =
-                    (courseProgress?.total_xp_earned ?? 0) + xpEarned;
+                let totalCards = 0;
+                const courseCardIds = new Set<string>();
 
-                let completedAt = courseProgress?.completed_at;
-
-                if (!completedAt && incrementCompleted > 0) {
-                    const lessons = await ctx.db
-                        .query("lessons")
-                        .withIndex("by_course", (q) =>
-                            q.eq("course_id", courseId)
-                        )
+                for (const l of lessons) {
+                    const cards = await ctx.db
+                        .query("cards")
+                        .withIndex("by_lesson", (q) => q.eq("lesson_id", l._id))
                         .collect();
-
-                    let totalCards = 0;
-                    for (const l of lessons) {
-                        const cards = await ctx.db
-                            .query("cards")
-                            .withIndex("by_lesson", (q) =>
-                                q.eq("lesson_id", l._id)
-                            )
-                            .collect();
-                        totalCards += cards.length;
-                    }
-
-                    if (totalCards > 0 && nextCardsCompleted >= totalCards) {
-                        completedAt = now;
+                    totalCards += cards.length;
+                    for (const c of cards) {
+                        courseCardIds.add(c._id);
                     }
                 }
 
+                let completedCards = 0;
+                let totalXp = 0;
+                if (courseCardIds.size > 0) {
+                    const userCardProgress = await ctx.db
+                        .query("user_card_progress")
+                        .withIndex("by_user", (q) =>
+                            q.eq("user_id", args.userId)
+                        )
+                        .collect();
+
+                    for (const p of userCardProgress) {
+                        if (!courseCardIds.has(p.card_id)) continue;
+                        if (p.quiz_completed) {
+                            completedCards++;
+                            totalXp += p.xp_earned || 0;
+                        }
+                    }
+                }
+
+                const completedAt =
+                    totalCards > 0 && completedCards >= totalCards
+                        ? now
+                        : courseProgress?.completed_at;
+
                 if (courseProgress) {
                     await ctx.db.patch(courseProgress._id, {
-                        cards_completed: nextCardsCompleted,
-                        total_xp_earned: nextTotalXp,
+                        cards_completed: completedCards,
+                        total_xp_earned: totalXp,
                         completed_at: completedAt,
                     });
                 } else {
                     await ctx.db.insert("user_course_progress", {
                         user_id: args.userId,
                         course_id: courseId,
-                        cards_completed: nextCardsCompleted,
-                        total_xp_earned: nextTotalXp,
+                        cards_completed: completedCards,
+                        total_xp_earned: totalXp,
                         completed_at: completedAt,
                     });
                 }
