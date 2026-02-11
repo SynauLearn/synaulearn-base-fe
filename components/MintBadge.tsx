@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Lock, Check, ExternalLink } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { useAccount, useSwitchChain, useWriteContract } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 import { ConnectButton } from './WalletConnect';
 import { BadgeContract, BADGE_CONTRACT_ADDRESS, BADGE_CONTRACT_ABI } from '@/lib/badgeContract';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
-import { useSIWFProfile } from './SignInWithFarcaster';
 import { useToast } from './ui/Toast';
 import {
     useUserByFid,
@@ -41,13 +40,12 @@ export default function MintBadge({ onBack }: MintBadgeProps) {
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintingStatus, setMintingStatus] = useState<string>('');
     const { context } = useMiniKit();
-    const siwfProfile = useSIWFProfile();
     const { showToast, ToastComponent } = useToast();
 
     // Get FID from MiniKit or SIWF
-    const fid = context?.user?.fid || siwfProfile.fid;
-    const fidUsername = context?.user?.username || siwfProfile.username;
-    const fidDisplayName = context?.user?.displayName || siwfProfile.displayName;
+    const fid = context?.user?.fid;
+    const fidUsername = context?.user?.username;
+    const fidDisplayName = context?.user?.displayName;
 
     // Convex hooks
     const getOrCreateUser = useGetOrCreateUser();

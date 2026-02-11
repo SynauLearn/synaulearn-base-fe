@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Edit, Lock, Trophy, Wallet } from 'lucide-react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount } from 'wagmi';
-import { BadgeContract } from '@/lib/badgeContract';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { WalletConnect } from './WalletConnect';
 import { SignInWithFarcaster, useSIWFProfile } from './SignInWithFarcaster';
-import { useUserByFid, useUserStats, useCourses, useGetOrCreateUser, UserId, CourseId } from '@/lib/convexApi';
-import { useMutation } from 'convex/react';
+import { useUserByFid, useUserStats, useCourses, useGetOrCreateUser, UserId } from '@/lib/convexApi';
 
 interface ProfileProps {
   onBack: () => void;
@@ -25,7 +22,6 @@ interface Badge {
 export default function Profile({ onBack }: ProfileProps) {
   const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
-  const { user: authUser, isAuthenticated, isInMiniApp } = useUnifiedAuth();
   const siwfProfile = useSIWFProfile();
 
   // Get FID from available sources

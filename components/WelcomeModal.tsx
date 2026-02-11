@@ -1,4 +1,3 @@
-import React from 'react';
 import { BookOpen, Award, Zap, X } from 'lucide-react';
 import { SafeArea } from '@coinbase/onchainkit/minikit';
 import { useLocale } from '@/lib/LocaleContext';

@@ -14,7 +14,6 @@ import HomePage from "@/features/v2/home";
 
 // Lazy load non-critical components
 const WelcomeModal = lazy(() => import("@/components/WelcomeModal"));
-const Drawer = lazy(() => import("@/components/Drawer"));
 const LeaderboardPage = lazy(() => import("@/features/v2/leaderboard"));
 const CoursesPage = lazy(() => import("@/features/v2/courses"));
 
@@ -29,14 +28,6 @@ const Profile = dynamic(() => import("@/components/Profile"), {
   ),
 });
 const MintBadgePage = dynamic(() => import("@/features/v2/mintbadge"), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  ),
-});
-const MyBalance = dynamic(() => import("@/components/MyBalance"), {
   ssr: false,
   loading: () => (
     <div className="min-h-screen flex items-center justify-center">
@@ -170,9 +161,6 @@ export default function ClientApp({
       case "mintbadge":
         return <MintBadgePage onBack={handleBackToHome} />;
 
-      case "balance":
-        return <MyBalance onBack={handleBackToHome} />;
-
       default:
         return (
           //   <HomeView
@@ -196,34 +184,8 @@ export default function ClientApp({
         </Suspense>
       )}
 
-      {/* Drawer Navigation */}
-      <Suspense fallback={null}>
-        <Drawer
-          isOpen={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          currentView={currentView}
-          onNavigate={handleNavigate}
-          onMintBadgeClick={() => {
-            setIsDrawerOpen(false);
-            handleNavigate("mintbadge");
-          }}
-        />
-      </Suspense>
-
       {/* Main App */}
       <main className="relative w-full min-h-screen">
-        {/* Global Header - shown on all tabs */}
-        {/* <Header onMenuClick={() => setIsDrawerOpen(true)} /> */}
-
-        <Suspense
-          fallback={
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          }
-        >
-          {renderView()}
-        </Suspense>
         {!isLessonStart && (
           <BottomBar currentView={currentView} onNavigate={handleNavigate} />
         )}

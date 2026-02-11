@@ -5,7 +5,7 @@ import type { MetadataRoute } from "next";
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://synaulearn.space";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.synaulearn.com";
     const lastModified = new Date();
 
     return [

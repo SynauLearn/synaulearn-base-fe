@@ -22,7 +22,7 @@ export const wagmiConfig = createConfig({
     metaMask({
       dappMetadata: {
         name: "SynauLearn",
-        url: typeof window !== 'undefined' ? window.location.origin : 'https://synaulearn.space',
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://app.synaulearn.com',
       },
     }),
     farcasterMiniApp(), // Required for Base App frame integration

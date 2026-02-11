@@ -6,7 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
-const ROOT_URL = process.env.NEXT_PUBLIC_APP_URL || "https://synaulearn.space";
+const ROOT_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.synaulearn.com";
 
 /**
  * Viewport configuration for mobile optimization
