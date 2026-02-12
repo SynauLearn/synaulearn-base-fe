@@ -60,10 +60,21 @@ export default function ClientApp({
   const courses = usePreloadedQuery(preloadedCourses);
   const categories = usePreloadedQuery(preloadedCategories);
 
+  // Redirect browser users to demo
+  useEffect(() => {
+    if (!context && typeof window !== "undefined") {
+      // No MiniKit context = running in a regular browser
+      window.location.href = "/demo";
+    }
+  }, [context]);
+
   // Initialize app and handle splash screen
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // Browser users are redirected above, skip initialization
+        if (!context) return;
+
         // Check if user is first-time visitor
         const userId = context?.user?.fid || "browser_user";
         const storageKey = `synaulearn_welcome_${userId}`;

@@ -12,6 +12,7 @@ import type * as badges from "../badges.js";
 import type * as cards from "../cards.js";
 import type * as categories from "../categories.js";
 import type * as courses from "../courses.js";
+import type * as demo from "../demo.js";
 import type * as inspect from "../inspect.js";
 import type * as lessons from "../lessons.js";
 import type * as migrations_migrateQuizzes from "../migrations/migrateQuizzes.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   cards: typeof cards;
   categories: typeof categories;
   courses: typeof courses;
+  demo: typeof demo;
   inspect: typeof inspect;
   lessons: typeof lessons;
   "migrations/migrateQuizzes": typeof migrations_migrateQuizzes;

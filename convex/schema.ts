@@ -46,6 +46,7 @@ export default defineSchema({
         course_number: v.optional(v.number()), // Unique numeric ID for smart contract
         created_at: v.number(),
         course_detail: v.optional(v.string()), // Detailed description/markdown for the course
+        is_demo: v.optional(v.boolean()), // Flag for demo courses
         // Admin fields
         slug: v.optional(v.string()),
     })
@@ -118,6 +119,24 @@ export default defineSchema({
     })
         .index("by_card", ["card_id"])
         .index("by_type", ["quiz_type"]),
+
+    // ============ DEMO SESSIONS (Analytics) ============
+    demo_sessions: defineTable({
+        session_id: v.string(),            // UUID generated client-side
+        started_at: v.number(),            // timestamp
+        ended_at: v.optional(v.number()),  // timestamp when session ended
+        completed: v.boolean(),            // did they finish all 5 cards?
+        cards_viewed: v.number(),          // progress (0-5)
+        quiz_score: v.number(),            // correct answers (0-5)
+        cta_clicked: v.boolean(),          // did they click CTA?
+        cta_type: v.optional(v.string()),  // 'base_app' | 'share'
+        referrer: v.optional(v.string()),  // utm_source or document.referrer
+        user_agent: v.optional(v.string()),
+        locale: v.optional(v.string()),    // 'en' | 'id'
+    })
+        .index("by_session", ["session_id"])
+        .index("by_completed", ["completed"])
+        .index("by_started_at", ["started_at"]),
 
     // ============ USER CARD PROGRESS ============
     user_card_progress: defineTable({

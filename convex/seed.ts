@@ -420,3 +420,288 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
     },
 });
 
+// ============ SEED DEMO COURSES (EN + ID) ============
+export const seedDemoCourse = mutation({
+    args: {},
+    handler: async (ctx) => {
+        const now = Date.now();
+
+        // Check if demo courses already exist
+        const allCourses = await ctx.db.query("courses").collect();
+        const existingDemo = allCourses.filter((c) => c.is_demo === true);
+        if (existingDemo.length > 0) {
+            return { message: "Demo courses already exist", count: existingDemo.length };
+        }
+
+        const results = [];
+
+        // ── ENGLISH DEMO COURSE ──
+        const enCourseId = await ctx.db.insert("courses", {
+            title: "Welcome to Web3",
+            description: "Your first step into the decentralized world. Learn the basics of blockchain, wallets, and why Web3 matters — no prior knowledge needed.",
+            emoji: "🚀",
+            language: "en",
+            difficulty: "Basic",
+            total_lessons: 1,
+            is_demo: true,
+            created_at: now,
+            course_detail: `
+# Welcome to Web3
+
+This demo lesson introduces you to the world of blockchain and Web3. You'll learn what makes it different from the internet you know today.
+
+## What you'll learn
+- What blockchain and Web3 are
+- How digital wallets work
+- What makes transactions "decentralized"
+- Why Web3 matters for you
+
+## Who is this for?
+Complete beginners. No coding or crypto experience needed.
+            `.trim(),
+        });
+
+        const enLessonId = await ctx.db.insert("lessons", {
+            course_id: enCourseId,
+            title: "Web3 Basics: From Web2 to Web3",
+            lesson_number: 1,
+            created_at: now,
+        });
+
+        // EN Cards
+        const enCards = [
+            {
+                flashcard_question: "What is Web3?",
+                flashcard_answer: "Web3 is the next evolution of the internet. Unlike Web2 (where companies like Google and Facebook control your data), Web3 lets YOU own your data, money, and digital identity through blockchain technology.",
+            },
+            {
+                flashcard_question: "What is a Blockchain?",
+                flashcard_answer: "A blockchain is a shared digital record book that no single person or company controls. Once data is written, it can't be changed or deleted. Think of it like a Google Spreadsheet that everyone can see, but nobody can secretly edit.",
+            },
+            {
+                flashcard_question: "What is a Digital Wallet?",
+                flashcard_answer: "A digital wallet (like Coinbase Wallet or MetaMask) is your passport to Web3. It stores your cryptocurrency and lets you interact with blockchain apps — no bank account needed. Your wallet has a public address (like an email) and a private key (like a password you must never share).",
+            },
+            {
+                flashcard_question: "What are Smart Contracts?",
+                flashcard_answer: "Smart contracts are programs that run on the blockchain automatically. They execute agreements without middlemen. For example, a smart contract can automatically send you a concert ticket the moment your payment is confirmed — no Ticketmaster needed.",
+            },
+            {
+                flashcard_question: "Why Does Web3 Matter?",
+                flashcard_answer: "Web3 gives power back to users. You can own digital art (NFTs), earn money in games, lend/borrow without banks (DeFi), and participate in communities that you co-own (DAOs). It's the internet, but you're the owner — not the product.",
+            },
+        ];
+
+        const enCardIds = [];
+        for (let i = 0; i < enCards.length; i++) {
+            const cardId = await ctx.db.insert("cards", {
+                lesson_id: enLessonId,
+                card_number: i + 1,
+                ...enCards[i],
+                created_at: now,
+            });
+            enCardIds.push(cardId);
+        }
+
+        // EN Quizzes: 2 MC, 2 TF, 1 Fill-blank
+        const enQuizzes = [
+            // MC 1
+            {
+                card_id: enCardIds[0],
+                quiz_type: "multiple_choice",
+                question: "What is the key difference between Web2 and Web3?",
+                options: [
+                    { id: "A", text: "Web3 is faster than Web2" },
+                    { id: "B", text: "In Web3, users own their data instead of companies" },
+                    { id: "C", text: "Web3 doesn't use the internet" },
+                    { id: "D", text: "Web3 is only for developers" },
+                ],
+                correct_answer: "B",
+                created_at: now,
+            },
+            // MC 2
+            {
+                card_id: enCardIds[1],
+                quiz_type: "multiple_choice",
+                question: "What is a blockchain best compared to?",
+                options: [
+                    { id: "A", text: "A private database owned by a company" },
+                    { id: "B", text: "A shared record book that nobody can secretly change" },
+                    { id: "C", text: "A regular website" },
+                    { id: "D", text: "An email service" },
+                ],
+                correct_answer: "B",
+                created_at: now,
+            },
+            // TF 1
+            {
+                card_id: enCardIds[2],
+                quiz_type: "true_false",
+                question: "A digital wallet's private key should be shared with friends for security.",
+                correct_answer: "false",
+                created_at: now,
+            },
+            // TF 2
+            {
+                card_id: enCardIds[3],
+                quiz_type: "true_false",
+                question: "Smart contracts can execute automatically without intermediaries.",
+                correct_answer: "true",
+                created_at: now,
+            },
+            // Fill-blank
+            {
+                card_id: enCardIds[4],
+                quiz_type: "fill_blank",
+                question: "In Web3, users can own digital art through tokens called ___.",
+                correct_answer: "NFTs",
+                acceptable_answers: ["NFT", "nfts", "nft", "Non-Fungible Tokens"],
+                hint: "These three-letter tokens represent unique digital ownership",
+                created_at: now,
+            },
+        ];
+
+        for (const quiz of enQuizzes) {
+            await ctx.db.insert("quizzes", quiz);
+        }
+
+        results.push({ language: "en", courseId: enCourseId, lessonId: enLessonId, cards: enCardIds.length, quizzes: enQuizzes.length });
+
+        // ── INDONESIAN DEMO COURSE ──
+        const idCourseId = await ctx.db.insert("courses", {
+            title: "Selamat Datang di Web3",
+            description: "Langkah pertama kamu ke dunia terdesentralisasi. Pelajari dasar-dasar blockchain, wallet, dan mengapa Web3 penting — tanpa perlu pengetahuan sebelumnya.",
+            emoji: "🚀",
+            language: "id",
+            difficulty: "Basic",
+            total_lessons: 1,
+            is_demo: true,
+            created_at: now,
+            course_detail: `
+# Selamat Datang di Web3
+
+Demo ini memperkenalkan kamu ke dunia blockchain dan Web3. Kamu akan belajar apa yang membuatnya berbeda dari internet yang kamu kenal sehari-hari.
+
+## Apa yang akan kamu pelajari?
+- Apa itu blockchain dan Web3
+- Cara kerja wallet digital
+- Apa yang membuat transaksi "terdesentralisasi"
+- Mengapa Web3 penting untukmu
+
+## Untuk siapa ini?
+Pemula total. Tidak perlu pengalaman coding atau kripto.
+            `.trim(),
+        });
+
+        const idLessonId = await ctx.db.insert("lessons", {
+            course_id: idCourseId,
+            title: "Dasar Web3: Dari Web2 ke Web3",
+            lesson_number: 1,
+            created_at: now,
+        });
+
+        // ID Cards
+        const idCards = [
+            {
+                flashcard_question: "Apa itu Web3?",
+                flashcard_answer: "Web3 adalah evolusi internet berikutnya. Berbeda dengan Web2 (di mana perusahaan seperti Google dan Facebook menguasai datamu), Web3 memungkinkan KAMU yang memiliki data, uang, dan identitas digitalmu sendiri melalui teknologi blockchain.",
+            },
+            {
+                flashcard_question: "Apa itu Blockchain?",
+                flashcard_answer: "Blockchain adalah buku catatan digital bersama yang tidak dikontrol oleh satu orang atau perusahaan. Setelah data ditulis, data tidak bisa diubah atau dihapus. Bayangkan seperti Google Spreadsheet yang bisa dilihat semua orang, tapi tidak ada yang bisa mengeditnya diam-diam.",
+            },
+            {
+                flashcard_question: "Apa itu Wallet Digital?",
+                flashcard_answer: "Wallet digital (seperti Coinbase Wallet atau MetaMask) adalah paspor kamu ke dunia Web3. Wallet menyimpan cryptocurrency-mu dan memungkinkan kamu berinteraksi dengan aplikasi blockchain — tanpa perlu rekening bank. Wallet punya alamat publik (seperti email) dan private key (seperti password yang tidak boleh dibagikan).",
+            },
+            {
+                flashcard_question: "Apa itu Smart Contract?",
+                flashcard_answer: "Smart contract adalah program yang berjalan di blockchain secara otomatis. Mereka menjalankan perjanjian tanpa perantara. Contohnya, smart contract bisa otomatis mengirimkan tiket konser begitu pembayaranmu dikonfirmasi — tanpa perlu Ticketmaster.",
+            },
+            {
+                flashcard_question: "Mengapa Web3 Penting?",
+                flashcard_answer: "Web3 mengembalikan kekuatan kepada pengguna. Kamu bisa memiliki seni digital (NFT), menghasilkan uang di game, pinjam-meminjam tanpa bank (DeFi), dan berpartisipasi di komunitas yang kamu ikut miliki (DAO). Ini adalah internet, tapi kamu pemiliknya — bukan produknya.",
+            },
+        ];
+
+        const idCardIds = [];
+        for (let i = 0; i < idCards.length; i++) {
+            const cardId = await ctx.db.insert("cards", {
+                lesson_id: idLessonId,
+                card_number: i + 1,
+                ...idCards[i],
+                created_at: now,
+            });
+            idCardIds.push(cardId);
+        }
+
+        // ID Quizzes: 2 MC, 2 TF, 1 Fill-blank
+        const idQuizzes = [
+            // MC 1
+            {
+                card_id: idCardIds[0],
+                quiz_type: "multiple_choice",
+                question: "Apa perbedaan utama antara Web2 dan Web3?",
+                options: [
+                    { id: "A", text: "Web3 lebih cepat dari Web2" },
+                    { id: "B", text: "Di Web3, pengguna memiliki data mereka sendiri, bukan perusahaan" },
+                    { id: "C", text: "Web3 tidak menggunakan internet" },
+                    { id: "D", text: "Web3 hanya untuk developer" },
+                ],
+                correct_answer: "B",
+                created_at: now,
+            },
+            // MC 2
+            {
+                card_id: idCardIds[1],
+                quiz_type: "multiple_choice",
+                question: "Blockchain paling mirip dengan apa?",
+                options: [
+                    { id: "A", text: "Database pribadi milik perusahaan" },
+                    { id: "B", text: "Buku catatan bersama yang tidak bisa diubah diam-diam" },
+                    { id: "C", text: "Website biasa" },
+                    { id: "D", text: "Layanan email" },
+                ],
+                correct_answer: "B",
+                created_at: now,
+            },
+            // TF 1
+            {
+                card_id: idCardIds[2],
+                quiz_type: "true_false",
+                question: "Private key wallet digital sebaiknya dibagikan ke teman untuk keamanan.",
+                correct_answer: "false",
+                created_at: now,
+            },
+            // TF 2
+            {
+                card_id: idCardIds[3],
+                quiz_type: "true_false",
+                question: "Smart contract bisa berjalan secara otomatis tanpa perantara.",
+                correct_answer: "true",
+                created_at: now,
+            },
+            // Fill-blank
+            {
+                card_id: idCardIds[4],
+                quiz_type: "fill_blank",
+                question: "Di Web3, pengguna bisa memiliki seni digital melalui token bernama ___.",
+                correct_answer: "NFT",
+                acceptable_answers: ["NFTs", "nft", "nfts", "Non-Fungible Token"],
+                hint: "Token tiga huruf yang mewakili kepemilikan digital unik",
+                created_at: now,
+            },
+        ];
+
+        for (const quiz of idQuizzes) {
+            await ctx.db.insert("quizzes", quiz);
+        }
+
+        results.push({ language: "id", courseId: idCourseId, lessonId: idLessonId, cards: idCardIds.length, quizzes: idQuizzes.length });
+
+        return {
+            message: "Demo courses seeded successfully (EN + ID)",
+            results,
+        };
+    },
+});

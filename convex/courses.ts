@@ -19,6 +19,9 @@ export const list = query({
             courses = await ctx.db.query("courses").collect();
         }
 
+        // Exclude demo courses from production listing
+        courses = courses.filter((c) => c.is_demo !== true);
+
         // Filter by difficulty if provided
         if (args.difficulty) {
             courses = courses.filter((c) => c.difficulty === args.difficulty);
@@ -51,6 +54,9 @@ export const listWithCategories = query({
         } else {
             courses = await ctx.db.query("courses").collect();
         }
+
+        // Exclude demo courses from production listing
+        courses = courses.filter((c) => c.is_demo !== true);
 
         // Fetch categories for each course
         const coursesWithCategories = await Promise.all(
