@@ -60,12 +60,24 @@ export default function ClientApp({
   const courses = usePreloadedQuery(preloadedCourses);
   const categories = usePreloadedQuery(preloadedCategories);
 
-  // Redirect browser users to demo
+  // Redirect browser users to demo — wait for MiniKit to initialize first
   useEffect(() => {
-    if (!context && typeof window !== "undefined") {
-      // No MiniKit context = running in a regular browser
-      window.location.href = "/demo";
+    if (typeof window === "undefined") return;
+
+    // Give MiniKit time to initialize before deciding
+    const timer = setTimeout(() => {
+      if (!context) {
+        // Still no MiniKit context after delay = running in a regular browser
+        window.location.href = "/demo";
+      }
+    }, 1500);
+
+    // If context arrives before timeout, cancel the redirect
+    if (context) {
+      clearTimeout(timer);
     }
+
+    return () => clearTimeout(timer);
   }, [context]);
 
   // Initialize app and handle splash screen

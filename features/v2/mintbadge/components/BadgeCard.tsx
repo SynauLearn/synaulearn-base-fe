@@ -1,17 +1,40 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Info } from "lucide-react";
+import {
+    Transaction,
+    TransactionButton,
+    TransactionStatus,
+    TransactionStatusLabel,
+    TransactionStatusAction,
+} from "@coinbase/onchainkit/transaction";
+import { baseSepolia } from "wagmi/chains";
 
 export type BadgeStatus = "minted" | "unlocked" | "locked";
 
 interface BadgeCardProps {
     title: string;
     status: BadgeStatus;
-    image?: string; // Optional URL for the badge image
+    image?: string;
+    // Farcaster path
     onMint?: () => void;
+    // Base App path
+    isBaseApp?: boolean;
+    callsCallback?: () => Promise<any[]>;
+    onMintSuccess?: () => void;
+    onMintError?: (error: Error) => void;
 }
 
-const BadgeCard = ({ title, status, image, onMint }: BadgeCardProps) => {
+const BadgeCard = ({
+    title,
+    status,
+    image,
+    onMint,
+    isBaseApp,
+    callsCallback,
+    onMintSuccess,
+    onMintError,
+}: BadgeCardProps) => {
     const [isMinting, setIsMinting] = useState(false);
 
     const handleMint = async () => {
@@ -64,7 +87,24 @@ const BadgeCard = ({ title, status, image, onMint }: BadgeCardProps) => {
                 </div>
             )}
 
-            {status === "unlocked" && (
+            {status === "unlocked" && isBaseApp && callsCallback ? (
+                /* Base App: OnchainKit Transaction component */
+                <div className="self-stretch [&_button]:!h-9 [&_button]:!rounded-3xl [&_button]:!bg-[#2D2D2D] [&_button]:!text-[12px] [&_button]:!font-semibold [&_button]:!tracking-[0.01em]">
+                    <Transaction
+                        chainId={baseSepolia.id}
+                        calls={callsCallback}
+                        onSuccess={onMintSuccess}
+                        onError={(e) => onMintError?.(e as unknown as Error)}
+                    >
+                        <TransactionButton text="Mint" />
+                        <TransactionStatus>
+                            <TransactionStatusLabel />
+                            <TransactionStatusAction />
+                        </TransactionStatus>
+                    </Transaction>
+                </div>
+            ) : status === "unlocked" ? (
+                /* Farcaster/Other: existing button */
                 <button
                     onClick={handleMint}
                     disabled={isMinting}
@@ -79,7 +119,7 @@ const BadgeCard = ({ title, status, image, onMint }: BadgeCardProps) => {
                         <span className="tracking-[0.01em] z-10">Mint</span>
                     )}
                 </button>
-            )}
+            ) : null}
 
             {status === "locked" && (
                 <div className="h-9 flex items-center justify-center gap-1 text-left text-[12px] text-[#7A7A7A] font-inter">

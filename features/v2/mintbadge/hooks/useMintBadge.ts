@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { baseSepolia } from "wagmi/chains";
+import type { ContractFunctionParameters } from "viem";
 import {
     BadgeContract,
     BADGE_CONTRACT_ADDRESS,
@@ -41,6 +42,9 @@ export function useMintBadge() {
     const { writeContractAsync } = useWriteContract();
     const { showToast, ToastComponent } = useToast();
     const { context } = useMiniKit();
+
+    // Detect Base App (clientFid 309857)
+    const isBaseApp = context?.client?.clientFid === 309857;
 
     // State
     const [filter, setFilter] = useState<FilterType>("all");
@@ -144,7 +148,7 @@ export function useMintBadge() {
     // Helper to find full course object by ID
     const findCourse = (id: string) => courses.find((c) => c.id === id);
 
-    // Minting Logic
+    // ── Minting Logic (Farcaster / non-Base-App path) ──────────────────
     const handleMintBadge = async (id: string) => {
         const course = findCourse(id);
         if (!course) return;
@@ -156,14 +160,8 @@ export function useMintBadge() {
             return;
         }
 
-        // Base App does not support signing on Base Sepolia.
-        if (context?.client?.clientFid === 309857) {
-            showToast(
-                "Minting on Base Sepolia only available through Farcaster App",
-                "error"
-            );
-            return;
-        }
+        // Base App uses the <Transaction> component path instead
+        if (isBaseApp) return;
 
         try {
             setMintingCourseId(course.id);
@@ -270,18 +268,121 @@ export function useMintBadge() {
         }
     };
 
+    // ── Base App path: async calls callback for <Transaction> component ──
+    const getMintCallsForCourse = useCallback(
+        (courseId: string) => {
+            // Return an async function that <Transaction> will call on button click
+            return async (): Promise<ContractFunctionParameters[]> => {
+                const course = findCourse(courseId);
+                if (!course || !course.course_number) {
+                    throw new Error("Course not found or missing course number");
+                }
+
+                if (!address) {
+                    throw new Error("Wallet not connected");
+                }
+
+                // Fetch backend signature
+                const signResponse = await fetch("/api/sign-mint", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        userAddress: address,
+                        courseId: course.id,
+                        fid: user?.fid,
+                    }),
+                });
+
+                const signResult = await signResponse.json();
+                if (!signResult.success) {
+                    throw new Error(signResult.error || "Signature failed");
+                }
+
+                return [
+                    {
+                        address: BADGE_CONTRACT_ADDRESS,
+                        abi: BADGE_CONTRACT_ABI,
+                        functionName: "mintBadge",
+                        args: [
+                            BigInt(course.course_number),
+                            signResult.signature as `0x${string}`,
+                        ],
+                    },
+                ];
+            };
+        },
+        [address, user?.fid, courses]
+    );
+
+    // ── Base App path: post-transaction success handler ──
+    const onMintSuccess = useCallback(
+        async (courseId: string) => {
+            const course = findCourse(courseId);
+            if (!course || !address) return;
+
+            showToast("✅ Badge minted!", "success");
+
+            // Best-effort: fetch token ID
+            let tokenId = "0";
+            try {
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+                const fetchedId = await BadgeContract.getUserBadgeForCourse(
+                    address as `0x${string}`,
+                    course.course_number!
+                );
+                tokenId = fetchedId.toString();
+            } catch (e) {
+                console.warn("Could not fetch new token ID immediately", e);
+            }
+
+            // Save to Convex
+            if (convexUser?._id) {
+                try {
+                    await saveMintedBadge({
+                        userId: convexUser._id,
+                        courseId: course._id as any,
+                        tokenId,
+                        txHash: "0x", // Transaction hash not easily accessible from onSuccess
+                        walletAddress: address,
+                    });
+                } catch (e) {
+                    console.error("Failed to save badge to DB:", e);
+                }
+            }
+        },
+        [address, courses, convexUser, saveMintedBadge, showToast]
+    );
+
+    // ── Base App path: error handler ──
+    const onMintError = useCallback(
+        (error: Error) => {
+            const msg = error?.message || "Minting failed";
+            if (!msg.includes("User rejected")) {
+                showToast(`❌ ${msg}`, "error");
+            }
+            console.error("Transaction error:", error);
+        },
+        [showToast]
+    );
+
     return {
         // Data
         displayedBadges,
         stats,
+        courses,
         // State
         filter,
         mintingCourseId,
         mintingStatus,
+        isBaseApp,
+        address,
         // Actions
         setFilter,
         handleMintBadge,
+        getMintCallsForCourse,
+        onMintSuccess,
+        onMintError,
         // Components
-        ToastComponent
+        ToastComponent,
     };
 }

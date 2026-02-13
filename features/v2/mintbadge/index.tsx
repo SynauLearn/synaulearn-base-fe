@@ -16,7 +16,11 @@ const MintBadgePage = ({ onBack }: MintBadgePageProps) => {
         filter,
         setFilter,
         handleMintBadge,
-        ToastComponent
+        isBaseApp,
+        getMintCallsForCourse,
+        onMintSuccess,
+        onMintError,
+        ToastComponent,
     } = useMintBadge();
 
     return (
@@ -50,6 +54,10 @@ const MintBadgePage = ({ onBack }: MintBadgePageProps) => {
                 <BadgeList
                     badges={displayedBadges}
                     onMintBadge={handleMintBadge}
+                    isBaseApp={isBaseApp}
+                    getMintCallsForCourse={getMintCallsForCourse}
+                    onMintSuccess={onMintSuccess}
+                    onMintError={onMintError}
                 />
             </div>
         </div>

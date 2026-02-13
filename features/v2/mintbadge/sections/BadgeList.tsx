@@ -12,9 +12,21 @@ export interface BadgeItem {
 interface BadgeListProps {
     badges: BadgeItem[];
     onMintBadge: (id: string) => void;
+    // Base App path
+    isBaseApp?: boolean;
+    getMintCallsForCourse?: (courseId: string) => () => Promise<any[]>;
+    onMintSuccess?: (courseId: string) => void;
+    onMintError?: (error: Error) => void;
 }
 
-const BadgeList = ({ badges, onMintBadge }: BadgeListProps) => {
+const BadgeList = ({
+    badges,
+    onMintBadge,
+    isBaseApp,
+    getMintCallsForCourse,
+    onMintSuccess,
+    onMintError,
+}: BadgeListProps) => {
     if (badges.length === 0) {
         return (
             <div className="w-full max-w-[425px] sm:max-w-[520px] md:max-w-[720px] lg:max-w-[960px] mx-auto px-4 text-center">
@@ -49,6 +61,18 @@ const BadgeList = ({ badges, onMintBadge }: BadgeListProps) => {
                     status={badge.status}
                     image={badge.image}
                     onMint={() => onMintBadge(badge.id)}
+                    isBaseApp={isBaseApp}
+                    callsCallback={
+                        isBaseApp && getMintCallsForCourse
+                            ? getMintCallsForCourse(badge.id)
+                            : undefined
+                    }
+                    onMintSuccess={
+                        onMintSuccess
+                            ? () => onMintSuccess(badge.id)
+                            : undefined
+                    }
+                    onMintError={onMintError}
                 />
             ))}
         </div>

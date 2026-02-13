@@ -23,9 +23,9 @@ export const minikitConfig = {
     subtitle: "SynauLearn",
     description: "Learn Web3, blockchain, and crypto through interactive micro-learning. Complete courses, earn XP, and mint your achievements as NFT badges on Base.",
     screenshotUrls: [
-      `${ROOT_URL}/screenshot1.jpg`,
-      `${ROOT_URL}/screenshot2.jpg`,
-      `${ROOT_URL}/screenshot3.jpg`,
+      `${ROOT_URL}/screenshot1.png`,
+      `${ROOT_URL}/screenshot2.png`,
+      `${ROOT_URL}/screenshot3.png`,
     ],
     iconUrl: `${ROOT_URL}/icon.png`,
     splashImageUrl: `${ROOT_URL}/splash.png`,

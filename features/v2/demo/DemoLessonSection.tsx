@@ -23,7 +23,6 @@ import { useCourseContext } from "@/features/v2/courses/contexts/CourseContext";
 import { useDemoProgress } from "./hooks/useDemoProgress";
 import { useDemoAnalytics } from "./hooks/useDemoAnalytics";
 import DemoCTA from "./DemoCTA";
-import { Id } from "@/convex/_generated/dataModel";
 
 type Step = "flashcard" | "quiz" | "result";
 
