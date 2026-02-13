@@ -55,6 +55,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
               config={{
                 appearance: {
                   name: "SynauLearn",
+                  logo: "https://app.synaulearn.com/splash.png",
                   mode: "auto",
                   theme: "cyberpunk",
                 },

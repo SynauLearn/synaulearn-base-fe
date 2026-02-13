@@ -93,8 +93,19 @@ const BadgeCard = ({
                     <Transaction
                         chainId={baseSepolia.id}
                         calls={callsCallback}
-                        onSuccess={onMintSuccess}
-                        onError={(e) => onMintError?.(e as unknown as Error)}
+                        isSponsored={true}
+                        onSuccess={(response) => {
+                            console.log('[Mint] Transaction success:', response);
+                            onMintSuccess?.();
+                        }}
+                        onError={(e) => {
+                            console.error('[Mint] Transaction error:', e);
+                            console.error('[Mint] Error details:', JSON.stringify(e, null, 2));
+                            onMintError?.(e as unknown as Error);
+                        }}
+                        onStatus={(status) => {
+                            console.log('[Mint] Transaction status:', status);
+                        }}
                     >
                         <TransactionButton text="Mint" />
                         <TransactionStatus>
