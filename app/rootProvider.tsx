@@ -54,14 +54,14 @@ export function RootProvider({ children }: { children: ReactNode }) {
               chain={baseSepolia}
               config={{
                 appearance: {
-                  name: "SynauLearn",
-                  logo: "https://app.synaulearn.com/splash.png",
-                  mode: "auto",
-                  theme: "cyberpunk",
+                  name: 'SynauLearn',
+                  logo: 'https://app.synaulearn.com/splash.png',
+                  mode: 'auto',
+                  theme: 'default',
                 },
                 wallet: {
                   display: "modal",
-                  preference: "all",
+                  preference: "eoaOnly",
                 },
               }}
               miniKit={{
