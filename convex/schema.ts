@@ -76,19 +76,9 @@ export default defineSchema({
         // Flashcard
         flashcard_question: v.optional(v.string()), // Made optional to support Admin generic cards
         flashcard_answer: v.optional(v.string()),   // Made optional to support Admin generic cards
-        // Quiz (DEPRECATED - kept for migration rollback, use quizzes table)
-        quiz_question: v.optional(v.string()),
-        quiz_option_a: v.optional(v.string()),
-        quiz_option_b: v.optional(v.string()),
-        quiz_option_c: v.optional(v.string()),
-        quiz_option_d: v.optional(v.string()),
-        quiz_correct_answer: v.optional(v.string()), // 'A' | 'B' | 'C' | 'D'
         created_at: v.number(),
         // Admin fields
-        type: v.optional(v.string()),
-        title: v.optional(v.string()),
         content: v.optional(v.string()),
-        quiz_type: v.optional(v.string()),
     })
         .index("by_lesson", ["lesson_id"])
         .index("by_lesson_and_number", ["lesson_id", "card_number"]),

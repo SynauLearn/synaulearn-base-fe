@@ -68,17 +68,24 @@ export const insertCards = mutation({
                 continue;
             }
 
-            await ctx.db.insert("cards", {
+            const cardId = await ctx.db.insert("cards", {
                 lesson_id,
                 card_number: card.card_number,
                 flashcard_question: card.flashcard_question,
                 flashcard_answer: card.flashcard_answer,
-                quiz_question: card.quiz_question,
-                quiz_option_a: card.quiz_option_a,
-                quiz_option_b: card.quiz_option_b,
-                quiz_option_c: card.quiz_option_c,
-                quiz_option_d: card.quiz_option_d,
-                quiz_correct_answer: card.quiz_correct_answer,
+                created_at: card.created_at,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
                 created_at: card.created_at,
             });
             inserted++;

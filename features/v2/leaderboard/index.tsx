@@ -16,6 +16,8 @@ interface LeaderboardUser {
     pfpUrl?: string | null;
     totalXP: number;
     rank: number;
+    fid?: number;
+    walletAddress?: string;
     isCurrentUser?: boolean;
 }
 
@@ -43,6 +45,8 @@ const LeaderboardPage = ({ onBack }: LeaderboardPageProps) => {
     // Use mock data if not authenticated, otherwise use real data
     const useMockData = !isAuthenticated;
 
+    const normalizeWallet = (wallet?: string | null) => wallet?.toLowerCase();
+
     // Transform and enrich data with ranks
     const users: LeaderboardUser[] = useMemo(() => {
         // If not authenticated, use mock data for testing
@@ -51,22 +55,84 @@ const LeaderboardPage = ({ onBack }: LeaderboardPageProps) => {
         }
 
         if (!leaderboardData) return [];
-        return leaderboardData.map((user, index) => {
-            const isCurrentUser = isInMiniApp
-                ? authUser?.fid === user.fid
-                : authUser?.walletAddress?.toLowerCase() === user.wallet_address?.toLowerCase();
+
+        // Strict current-user matching: never treat undefined FID/wallet as equal.
+        const transformed = leaderboardData.map((user) => {
+            const fidMatch =
+                authUser?.fid !== undefined &&
+                user.fid !== undefined &&
+                authUser.fid === user.fid;
+            const walletMatch =
+                !!authUser?.walletAddress &&
+                !!user.wallet_address &&
+                normalizeWallet(authUser.walletAddress) === normalizeWallet(user.wallet_address);
+            const isCurrentUser = isInMiniApp ? (fidMatch || walletMatch) : (walletMatch || fidMatch);
+
             return {
                 id: user._id,
                 username: user.username || null,
                 displayName: user.display_name || null,
-                // Use authUser pfpUrl for current user, null for others (schema doesn't have pfp_url yet)
-                pfpUrl: isCurrentUser ? (authUser?.pfpUrl || null) : null,
+                pfpUrl: null,
                 totalXP: user.total_xp,
-                rank: index + 1,
+                rank: 0,
+                fid: user.fid,
+                walletAddress: user.wallet_address || undefined,
                 isCurrentUser,
             };
         });
-    }, [leaderboardData, authUser, useMockData]);
+
+        // Keep only one "(You)" row (highest XP if multiple records match current identity).
+        const matched = transformed
+            .map((user, index) => ({ user, index }))
+            .filter(({ user }) => user.isCurrentUser);
+        if (matched.length > 1) {
+            matched.sort((a, b) => b.user.totalXP - a.user.totalXP);
+            const selectedIndex = matched[0].index;
+            transformed.forEach((user, index) => {
+                user.isCurrentUser = index === selectedIndex;
+            });
+        }
+
+        // Dedupe obvious duplicate records that share same FID or wallet.
+        const dedupeKeyToIndex = new Map<string, number>();
+        const deduped: LeaderboardUser[] = [];
+
+        transformed.forEach((user) => {
+            const keys = [
+                user.fid !== undefined ? `fid:${user.fid}` : null,
+                user.walletAddress ? `wallet:${normalizeWallet(user.walletAddress)}` : null,
+            ].filter((key): key is string => Boolean(key));
+
+            const existingIndex = keys
+                .map((key) => dedupeKeyToIndex.get(key))
+                .find((index): index is number => index !== undefined);
+
+            if (existingIndex === undefined) {
+                const newIndex = deduped.length;
+                deduped.push(user);
+                keys.forEach((key) => dedupeKeyToIndex.set(key, newIndex));
+                return;
+            }
+
+            const existing = deduped[existingIndex];
+            const preferred = existing.totalXP >= user.totalXP ? existing : user;
+            deduped[existingIndex] = {
+                ...preferred,
+                isCurrentUser: Boolean(existing.isCurrentUser || user.isCurrentUser),
+                pfpUrl: (existing.isCurrentUser || user.isCurrentUser) ? (authUser?.pfpUrl || null) : null,
+            };
+
+            keys.forEach((key) => dedupeKeyToIndex.set(key, existingIndex));
+        });
+
+        return deduped
+            .sort((a, b) => b.totalXP - a.totalXP)
+            .map((user, index) => ({
+                ...user,
+                rank: index + 1,
+                pfpUrl: user.isCurrentUser ? (authUser?.pfpUrl || null) : null,
+            }));
+    }, [leaderboardData, authUser, isInMiniApp, useMockData]);
 
     // Split into top 3 and rest
     const topThree = users.slice(0, 3);

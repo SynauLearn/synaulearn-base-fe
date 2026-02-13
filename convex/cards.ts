@@ -48,16 +48,7 @@ export const create = mutation({
 
         // Optional content fields
         flashcard_answer: v.optional(v.string()),
-        quiz_type: v.optional(v.string()),
-        quiz_question: v.optional(v.string()),
-        quiz_correct_answer: v.optional(v.string()),
-        quiz_option_a: v.optional(v.string()),
-        quiz_option_b: v.optional(v.string()),
-        quiz_option_c: v.optional(v.string()),
-        quiz_option_d: v.optional(v.string()),
-
-        type: v.optional(v.string()),
-        title: v.optional(v.string()),
+        flashcard_question: v.optional(v.string()),
         content: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
@@ -76,16 +67,7 @@ export const update = mutation({
 
         // Optional content fields
         flashcard_answer: v.optional(v.string()),
-        quiz_type: v.optional(v.string()),
-        quiz_question: v.optional(v.string()),
-        quiz_correct_answer: v.optional(v.string()),
-        quiz_option_a: v.optional(v.string()),
-        quiz_option_b: v.optional(v.string()),
-        quiz_option_c: v.optional(v.string()),
-        quiz_option_d: v.optional(v.string()),
-
-        type: v.optional(v.string()),
-        title: v.optional(v.string()),
+        flashcard_question: v.optional(v.string()),
         content: v.optional(v.string()),
     },
     handler: async (ctx, args) => {

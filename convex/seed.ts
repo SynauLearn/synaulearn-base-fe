@@ -118,10 +118,25 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
         ];
 
         for (let i = 0; i < lesson1Cards.length; i++) {
-            await ctx.db.insert("cards", {
+            const card = lesson1Cards[i];
+            const cardId = await ctx.db.insert("cards", {
                 lesson_id: lesson1Id,
                 card_number: i + 1,
-                ...lesson1Cards[i],
+                flashcard_question: card.flashcard_question,
+                flashcard_answer: card.flashcard_answer,
+                created_at: now,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
                 created_at: now,
             });
         }
@@ -181,10 +196,25 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
         ];
 
         for (let i = 0; i < lesson2Cards.length; i++) {
-            await ctx.db.insert("cards", {
+            const card = lesson2Cards[i];
+            const cardId = await ctx.db.insert("cards", {
                 lesson_id: lesson2Id,
                 card_number: i + 1,
-                ...lesson2Cards[i],
+                flashcard_question: card.flashcard_question,
+                flashcard_answer: card.flashcard_answer,
+                created_at: now,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
                 created_at: now,
             });
         }
@@ -244,10 +274,25 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
         ];
 
         for (let i = 0; i < lesson3Cards.length; i++) {
-            await ctx.db.insert("cards", {
+            const card = lesson3Cards[i];
+            const cardId = await ctx.db.insert("cards", {
                 lesson_id: lesson3Id,
                 card_number: i + 1,
-                ...lesson3Cards[i],
+                flashcard_question: card.flashcard_question,
+                flashcard_answer: card.flashcard_answer,
+                created_at: now,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
                 created_at: now,
             });
         }
@@ -381,7 +426,27 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
         ];
 
         for (let i = 0; i < lesson1Cards.length; i++) {
-            await ctx.db.insert("cards", { lesson_id: lesson1Id, card_number: i + 1, ...lesson1Cards[i], created_at: now });
+            const card = lesson1Cards[i];
+            const cardId = await ctx.db.insert("cards", {
+                lesson_id: lesson1Id,
+                card_number: i + 1,
+                flashcard_question: card.flashcard_question,
+                flashcard_answer: card.flashcard_answer,
+                created_at: now,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
+                created_at: now,
+            });
         }
 
         // Cards for Lesson 2 (5 cards)
@@ -394,7 +459,27 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
         ];
 
         for (let i = 0; i < lesson2Cards.length; i++) {
-            await ctx.db.insert("cards", { lesson_id: lesson2Id, card_number: i + 1, ...lesson2Cards[i], created_at: now });
+            const card = lesson2Cards[i];
+            const cardId = await ctx.db.insert("cards", {
+                lesson_id: lesson2Id,
+                card_number: i + 1,
+                flashcard_question: card.flashcard_question,
+                flashcard_answer: card.flashcard_answer,
+                created_at: now,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
+                created_at: now,
+            });
         }
 
         // Cards for Lesson 3 (5 cards)
@@ -407,7 +492,27 @@ Kursus ini dirancang untuk pemula yang ingin memahami teknologi blockchain moder
         ];
 
         for (let i = 0; i < lesson3Cards.length; i++) {
-            await ctx.db.insert("cards", { lesson_id: lesson3Id, card_number: i + 1, ...lesson3Cards[i], created_at: now });
+            const card = lesson3Cards[i];
+            const cardId = await ctx.db.insert("cards", {
+                lesson_id: lesson3Id,
+                card_number: i + 1,
+                flashcard_question: card.flashcard_question,
+                flashcard_answer: card.flashcard_answer,
+                created_at: now,
+            });
+            await ctx.db.insert("quizzes", {
+                card_id: cardId,
+                quiz_type: "multiple_choice",
+                question: card.quiz_question,
+                options: [
+                    { id: "A", text: card.quiz_option_a },
+                    { id: "B", text: card.quiz_option_b },
+                    { id: "C", text: card.quiz_option_c },
+                    { id: "D", text: card.quiz_option_d },
+                ],
+                correct_answer: card.quiz_correct_answer,
+                created_at: now,
+            });
         }
 
         return {

@@ -93,6 +93,17 @@ export const BADGE_ABI = [
   },
   {
     "type": "function",
+    "name": "mintBadgeTo",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "to", "type": "address" },
+      { "name": "courseId", "type": "uint256" },
+      { "name": "signature", "type": "bytes" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
     "name": "name",
     "stateMutability": "view",
     "inputs": [],

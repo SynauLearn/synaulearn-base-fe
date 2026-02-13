@@ -242,8 +242,8 @@ export function useMintBadge() {
             const txHashResult = await writeContractAsync({
                 address: BADGE_CONTRACT_ADDRESS,
                 abi: BADGE_CONTRACT_ABI,
-                functionName: "mintBadge",
-                args: [BigInt(courseIdNum), signResult.signature as `0x${string}`],
+                functionName: 'mintBadgeTo',
+                args: [address as `0x${string}`, BigInt(courseIdNum), signResult.signature as `0x${string}`],
                 chainId: baseSepolia.id,
             });
 
@@ -332,8 +332,9 @@ export function useMintBadge() {
                     {
                         address: BADGE_CONTRACT_ADDRESS,
                         abi: BADGE_CONTRACT_ABI,
-                        functionName: "mintBadge",
+                        functionName: "mintBadgeTo",
                         args: [
+                            address as `0x${string}`,
                             BigInt(course.course_number),
                             signResult.signature as `0x${string}`,
                         ],

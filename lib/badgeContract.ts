@@ -164,6 +164,7 @@ export const BadgeContract = {
   // Mint badge - NEW: requires signature from backend
   // NOTE: Chain switching is handled by the component using useSwitchChain hook
   async mintBadge(
+    userAddress: `0x${string}`,
     courseId: number,
     signature: `0x${string}`,
     onStatusUpdate?: (status: string) => void
@@ -175,12 +176,12 @@ export const BadgeContract = {
       console.log('🎯 Step 2: Sending transaction...');
       onStatusUpdate?.('Please approve in your wallet...');
 
-      // NEW: mintBadge requires courseId AND signature
+      // NEW: mintBadgeTo requires to address + courseId + signature
       const hash = await writeContract(config, {
         address: BADGE_CONTRACT_ADDRESS,
         abi: BADGE_CONTRACT_ABI,
-        functionName: 'mintBadge',
-        args: [BigInt(courseId), signature],
+        functionName: 'mintBadgeTo',
+        args: [userAddress, BigInt(courseId), signature],
         chainId: baseSepolia.id,
       });
 
