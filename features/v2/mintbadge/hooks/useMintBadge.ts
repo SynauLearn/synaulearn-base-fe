@@ -51,7 +51,6 @@ export function useMintBadge() {
     const [mintingCourseId, setMintingCourseId] = useState<string | null>(null);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintingStatus, setMintingStatus] = useState<string>("");
-    const [debugInfo, setDebugInfo] = useState<string>("");
 
     // Convex Hooks
     const getOrCreateUser = useGetOrCreateUser();
@@ -66,28 +65,7 @@ export function useMintBadge() {
     const coursesProgress = useAllCoursesProgress(convexUser?._id);
     const userBadges = useUserBadges(convexUser?._id);
 
-    // Read trusted signer from contract
-    const { data: contractSigner } = useReadContract({
-        address: BADGE_CONTRACT_ADDRESS,
-        abi: BADGE_CONTRACT_ABI,
-        functionName: "trustedSigner",
-        chainId: baseSepolia.id,
-    });
 
-    // Read contract version
-    const { data: contractVersion } = useReadContract({
-        address: BADGE_CONTRACT_ADDRESS,
-        abi: BADGE_CONTRACT_ABI,
-        functionName: "version",
-        chainId: baseSepolia.id,
-    });
-
-    // Debug: Force update on mount/change
-    useEffect(() => {
-        if (address || chain || user?.fid) {
-            setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | Signer: ${contractSigner ? 'OK' : '...'} | Ver: ${contractVersion || '...'}`);
-        }
-    }, [address, chain, user?.fid, contractSigner, contractVersion]);
 
     // Sync user creation
     useEffect(() => {
@@ -185,7 +163,13 @@ export function useMintBadge() {
         }
 
         // Base App uses the <Transaction> component path instead
-        if (isBaseApp) return;
+        if (isBaseApp) {
+            showToast(
+                "Minting on Base Sepolia only available through Farcaster App",
+                "error"
+            );
+            return;
+        }
 
         try {
             setMintingCourseId(course.id);
@@ -306,9 +290,8 @@ export function useMintBadge() {
                     throw new Error("Wallet not connected");
                 }
 
-                // Debug: capture address being used (redundant but kept for click-time state)
-                const info = `addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | course#: ${course.course_number}`;
-                setDebugInfo(info);
+
+
 
                 // Fetch backend signature
                 const signResponse = await fetch("/api/sign-mint", {
@@ -322,7 +305,6 @@ export function useMintBadge() {
                 });
 
                 const signResult = await signResponse.json();
-                setDebugInfo(prev => `${prev} | API: ${signResult.success ? 'OK' : signResult.error} | signer: ${signResult.signerAddress || 'N/A'}`);
 
                 if (!signResult.success) {
                     throw new Error(signResult.error || "Signature failed");
@@ -407,7 +389,6 @@ export function useMintBadge() {
         mintingStatus,
         isBaseApp,
         address,
-        debugInfo,
         // Actions
         setFilter,
         handleMintBadge,

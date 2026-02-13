@@ -21,7 +21,6 @@ const MintBadgePage = ({ onBack }: MintBadgePageProps) => {
         onMintSuccess,
         onMintError,
         ToastComponent,
-        debugInfo,
     } = useMintBadge();
 
     return (
@@ -59,7 +58,6 @@ const MintBadgePage = ({ onBack }: MintBadgePageProps) => {
                     getMintCallsForCourse={getMintCallsForCourse}
                     onMintSuccess={onMintSuccess}
                     onMintError={onMintError}
-                    debugInfo={debugInfo}
                 />
             </div>
         </div>

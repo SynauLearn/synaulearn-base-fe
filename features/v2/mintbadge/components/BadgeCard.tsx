@@ -23,8 +23,6 @@ interface BadgeCardProps {
     callsCallback?: () => Promise<any[]>;
     onMintSuccess?: () => void;
     onMintError?: (error: Error) => void;
-    // Debug info for Base App
-    debugInfo?: string;
 }
 
 const BadgeCard = ({
@@ -36,7 +34,6 @@ const BadgeCard = ({
     callsCallback,
     onMintSuccess,
     onMintError,
-    debugInfo,
 }: BadgeCardProps) => {
     const [isMinting, setIsMinting] = useState(false);
 
@@ -90,34 +87,7 @@ const BadgeCard = ({
                 </div>
             )}
 
-            {status === "unlocked" && isBaseApp && callsCallback ? (
-                /* Base App: OnchainKit Transaction component */
-                <div className="self-stretch [&_button]:!h-9 [&_button]:!rounded-3xl [&_button]:!bg-[#2D2D2D] [&_button]:!text-[12px] [&_button]:!font-semibold [&_button]:!tracking-[0.01em]">
-                    <Transaction
-                        chainId={baseSepolia.id}
-                        calls={callsCallback}
-                        isSponsored={true}
-                        onSuccess={(response) => {
-                            console.log('[Mint] Transaction success:', response);
-                            onMintSuccess?.();
-                        }}
-                        onError={(e) => {
-                            console.error('[Mint] Transaction error:', e);
-                            console.error('[Mint] Error details:', JSON.stringify(e, null, 2));
-                            onMintError?.(e as unknown as Error);
-                        }}
-                        onStatus={(status) => {
-                            console.log('[Mint] Transaction status:', status);
-                        }}
-                    >
-                        <TransactionButton text="Mint" />
-                        <TransactionStatus>
-                            <TransactionStatusLabel />
-                            <TransactionStatusAction />
-                        </TransactionStatus>
-                    </Transaction>
-                </div>
-            ) : status === "unlocked" ? (
+            {status === "unlocked" ? (
                 /* Farcaster/Other: existing button */
                 <button
                     onClick={handleMint}
@@ -134,12 +104,8 @@ const BadgeCard = ({
                     )}
                 </button>
             ) : null}
-            {/* Debug info - only show if present */}
-            {debugInfo && (
-                <div className="mt-2 p-2 bg-black/80 text-green-400 text-[10px] font-mono rounded overflow-auto max-h-[100px] break-all z-50 relative pointer-events-auto">
-                    {debugInfo}
-                </div>
-            )}
+
+
 
             {status === "locked" && (
                 <div className="h-9 flex items-center justify-center gap-1 text-left text-[12px] text-[#7A7A7A] font-inter">
