@@ -66,6 +66,13 @@ export function useMintBadge() {
     const coursesProgress = useAllCoursesProgress(convexUser?._id);
     const userBadges = useUserBadges(convexUser?._id);
 
+    // Debug: Force update on mount/change
+    useEffect(() => {
+        if (address || chain || user?.fid) {
+            setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid}`);
+        }
+    }, [address, chain, user?.fid]);
+
     // Sync user creation
     useEffect(() => {
         const ensureUser = async () => {
@@ -283,8 +290,9 @@ export function useMintBadge() {
                     throw new Error("Wallet not connected");
                 }
 
-                // Debug: capture address being used
-                setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | course#: ${course.course_number}`);
+                // Debug: capture address being used (redundant but kept for click-time state)
+                const info = `addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | course#: ${course.course_number}`;
+                setDebugInfo(info);
 
                 // Fetch backend signature
                 const signResponse = await fetch("/api/sign-mint", {

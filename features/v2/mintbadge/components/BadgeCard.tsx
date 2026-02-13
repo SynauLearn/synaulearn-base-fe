@@ -134,6 +134,12 @@ const BadgeCard = ({
                     )}
                 </button>
             ) : null}
+            {/* Debug info - only show if present */}
+            {debugInfo && (
+                <div className="mt-2 p-2 bg-black/80 text-green-400 text-[10px] font-mono rounded overflow-auto max-h-[100px] break-all z-50 relative pointer-events-auto">
+                    {debugInfo}
+                </div>
+            )}
 
             {status === "locked" && (
                 <div className="h-9 flex items-center justify-center gap-1 text-left text-[12px] text-[#7A7A7A] font-inter">
