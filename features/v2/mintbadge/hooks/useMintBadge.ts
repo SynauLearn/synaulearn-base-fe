@@ -51,6 +51,7 @@ export function useMintBadge() {
     const [mintingCourseId, setMintingCourseId] = useState<string | null>(null);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [mintingStatus, setMintingStatus] = useState<string>("");
+    const [debugInfo, setDebugInfo] = useState<string>("");
 
     // Convex Hooks
     const getOrCreateUser = useGetOrCreateUser();
@@ -282,6 +283,9 @@ export function useMintBadge() {
                     throw new Error("Wallet not connected");
                 }
 
+                // Debug: capture address being used
+                setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | course#: ${course.course_number}`);
+
                 // Fetch backend signature
                 const signResponse = await fetch("/api/sign-mint", {
                     method: "POST",
@@ -294,6 +298,8 @@ export function useMintBadge() {
                 });
 
                 const signResult = await signResponse.json();
+                setDebugInfo(prev => `${prev} | API: ${signResult.success ? 'OK' : signResult.error} | signer: ${signResult.signerAddress || 'N/A'}`);
+
                 if (!signResult.success) {
                     throw new Error(signResult.error || "Signature failed");
                 }
@@ -376,6 +382,7 @@ export function useMintBadge() {
         mintingStatus,
         isBaseApp,
         address,
+        debugInfo,
         // Actions
         setFilter,
         handleMintBadge,

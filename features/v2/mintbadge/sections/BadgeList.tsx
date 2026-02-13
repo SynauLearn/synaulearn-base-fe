@@ -17,6 +17,7 @@ interface BadgeListProps {
     getMintCallsForCourse?: (courseId: string) => () => Promise<any[]>;
     onMintSuccess?: (courseId: string) => void;
     onMintError?: (error: Error) => void;
+    debugInfo?: string;
 }
 
 const BadgeList = ({
@@ -26,6 +27,7 @@ const BadgeList = ({
     getMintCallsForCourse,
     onMintSuccess,
     onMintError,
+    debugInfo,
 }: BadgeListProps) => {
     if (badges.length === 0) {
         return (
@@ -73,6 +75,7 @@ const BadgeList = ({
                             : undefined
                     }
                     onMintError={onMintError}
+                    debugInfo={debugInfo}
                 />
             ))}
         </div>

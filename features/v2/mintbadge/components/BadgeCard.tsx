@@ -23,6 +23,8 @@ interface BadgeCardProps {
     callsCallback?: () => Promise<any[]>;
     onMintSuccess?: () => void;
     onMintError?: (error: Error) => void;
+    // Debug info for Base App
+    debugInfo?: string;
 }
 
 const BadgeCard = ({
@@ -34,6 +36,7 @@ const BadgeCard = ({
     callsCallback,
     onMintSuccess,
     onMintError,
+    debugInfo,
 }: BadgeCardProps) => {
     const [isMinting, setIsMinting] = useState(false);
 
