@@ -74,12 +74,20 @@ export function useMintBadge() {
         chainId: baseSepolia.id,
     });
 
+    // Read contract version
+    const { data: contractVersion } = useReadContract({
+        address: BADGE_CONTRACT_ADDRESS,
+        abi: BADGE_CONTRACT_ABI,
+        functionName: "version",
+        chainId: baseSepolia.id,
+    });
+
     // Debug: Force update on mount/change
     useEffect(() => {
         if (address || chain || user?.fid) {
-            setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | ContractSigner: ${contractSigner || 'Loading...'}`);
+            setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | Signer: ${contractSigner ? 'OK' : '...'} | Ver: ${contractVersion || '...'}`);
         }
-    }, [address, chain, user?.fid, contractSigner]);
+    }, [address, chain, user?.fid, contractSigner, contractVersion]);
 
     // Sync user creation
     useEffect(() => {
