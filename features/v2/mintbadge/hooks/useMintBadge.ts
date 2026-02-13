@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
+import { useAccount, useSwitchChain, useWriteContract, useReadContract } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { baseSepolia } from "wagmi/chains";
 import type { ContractFunctionParameters } from "viem";
@@ -66,12 +66,20 @@ export function useMintBadge() {
     const coursesProgress = useAllCoursesProgress(convexUser?._id);
     const userBadges = useUserBadges(convexUser?._id);
 
+    // Read trusted signer from contract
+    const { data: contractSigner } = useReadContract({
+        address: BADGE_CONTRACT_ADDRESS,
+        abi: BADGE_CONTRACT_ABI,
+        functionName: "trustedSigner",
+        chainId: baseSepolia.id,
+    });
+
     // Debug: Force update on mount/change
     useEffect(() => {
         if (address || chain || user?.fid) {
-            setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid}`);
+            setDebugInfo(`addr: ${address} | chain: ${chain?.id} | fid: ${user?.fid} | ContractSigner: ${contractSigner || 'Loading...'}`);
         }
-    }, [address, chain, user?.fid]);
+    }, [address, chain, user?.fid, contractSigner]);
 
     // Sync user creation
     useEffect(() => {
